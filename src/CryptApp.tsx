@@ -5,9 +5,7 @@ import {
   Redirect,
   Route
 } from "react-router-dom";
-// import {} from 'styled-components/cssprop';
-import LandingRoute from './components/routes/Landing/Landing';
-import LoginRoute from './components/routes/Login/LoginRoute';
+import AuthRoute from './components/routes/Login/AuthRoute';
 import FirebaseApp from './services/Firebase/Firebase';
 
 export default class CryptApp extends React.PureComponent {
@@ -18,7 +16,7 @@ export default class CryptApp extends React.PureComponent {
           <Route path="/" exact>
             <Redirect to="/auth" />
           </Route>
-          <Route path="/auth" exact component={LoginRoute} />
+          <Route path="/auth" exact component={AuthRoute} />
         </Switch>
       </Router>
     );
