@@ -1,0 +1,26 @@
+@font-face {
+  font-family: 'Retroica_Custom';
+  src: url('../assets/fonts/RetroicaCustom.ttf');
+}
+
+@font-face {
+  font-family: 'Montserrat_Regular';
+  src: url('../assets/fonts/MontserratRegular.ttf');
+}
+
+@font-face {
+  font-family: 'Montserrat_Semibold';
+  src: url('../assets/fonts/MontserratSemiBold.ttf');
+}
+
+@mixin retroica_custom_font {
+  font-family: 'Retroica_Custom';
+}
+
+@mixin montserrat_regular_font {
+  font-family: 'Montserrat_Regular';
+}
+
+@mixin montserrat_semibold_font {
+  font-family: 'Montserrat_Semibold';
+}

@@ -1,0 +1,148 @@
+@import "../../../styles/palette.scss";
+@import "../../../styles/fonts.scss";
+
+.authPageDivSignIn {
+  grid-template-columns: 0 1fr 1fr; 
+}
+
+.authPageDivSignUp {
+  grid-template-columns: 1fr 1fr 0 !important;
+}
+
+
+.authPageDiv {
+  width: 100vw;
+  height: 100vh;
+
+  .signInSpaceDiv {
+    position: absolute;
+    right: 0;
+    width: 50vw;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .signInTitleDiv {
+
+      .signInTitleCTA {
+        @include retroica_custom_font;
+        text-align: center;
+        font-size: 3.7rem;
+        margin-top: 0;
+        margin-bottom: 0;
+      }
+      
+      .signInTitleLogo {
+        min-width: 20rem;
+        width: 30rem;
+        max-width: 458px;
+      }
+
+    }
+
+    .signInForm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 50%;
+      max-width: 480px;
+
+      input {
+        height: 50px;
+        margin: 10px 0px 10px 0px;
+        border-radius: 8px;
+        @include montserrat_semibold_font;
+        font-size: 1.5rem;
+        color: #817E7E;
+        background-color: rgba(202, 202, 202, 0.5);
+        padding-left: 30px;
+        box-shadow: none;
+        border: none;
+      }
+
+      button {
+        margin-top: 15px;
+        width: 15rem;
+        height: 3.5rem;
+        background-color: rgba($color: #000000, $alpha: 0);
+        border: 1px solid #1588CC;
+        box-sizing: border-box;
+        border-radius: 11px;
+        @include montserrat_semibold_font;
+        font-size: 1.7rem;
+        color: #1588CC;
+      }
+    }
+
+  }
+
+
+  .infospaceDiv {
+    position: absolute;
+    height: 100%;
+    width: 50vw;
+    left: 0;
+    display: grid;
+    grid-template-areas: 
+      "welcomeArea"
+      "callToActionArea"
+    ;
+    grid-template-rows: 4fr 1fr;
+    @include primary_blue_gradient_bg;
+    border-radius: 0px 100px 100px 0px;
+    grid-area: infoSection;
+    z-index: 2;
+
+    .welcomeSection {
+      grid-area: "welcomeArea";
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
+      .welcomePara {
+        @include retroica_custom_font;
+        text-align: center;
+        font-size: 4.4rem;
+        color: #fff;
+      }
+      
+      .welcomeDescriptionPara {
+        @include retroica_custom_font;
+        text-align: center;
+        font-size: 1.4rem;
+        color: #fff;
+      }
+    }
+
+    .authCallToActionSection {
+      grid-area: "callToActionArea";
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      .auth_CTA_question_para {
+        @include retroica_custom_font;
+        text-align: center;
+        font-size: 1.1rem;
+        color: #fff;
+      }
+
+      .auth_CTA_button {
+        width: 15rem;
+        height: 3.5rem;
+        border: 1px solid #FFFFFF;
+        box-sizing: border-box;
+        border-radius: 11px;
+        @include montserrat_semibold_font;
+        font-size: 1.7rem;
+        color: #fff;
+        background-color: rgba($color: #000000, $alpha: 0);  
+      }
+    }
+    
+  }
+
+}
