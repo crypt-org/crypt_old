@@ -6,7 +6,7 @@ import {
   Route
 } from "react-router-dom";
 import AuthRoute from './components/routes/Login/AuthRoute';
-import FirebaseApp from './services/Firebase/Firebase';
+import SetupRoute from './components/routes/Setup/SetupRoute';
 
 export default class CryptApp extends React.PureComponent {
   render(): JSX.Element {
@@ -17,6 +17,7 @@ export default class CryptApp extends React.PureComponent {
             <Redirect to="/auth" />
           </Route>
           <Route path="/auth" exact component={AuthRoute} />
+          <Route path="/setup" exact component={SetupRoute} />
         </Switch>
       </Router>
     );

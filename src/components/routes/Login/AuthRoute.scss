@@ -55,12 +55,16 @@
         border-radius: 8px;
         @include montserrat_semibold_font;
         font-size: 1.5rem;
-        color: #817E7E;
+        color: #696969;
         background-color: rgba(202, 202, 202, 0.5);
         padding-left: 30px;
         padding-right: 30px;
         box-shadow: none;
         border: none;
+
+        &::placeholder {
+          opacity: 0.5;
+        }
       }
 
       button {

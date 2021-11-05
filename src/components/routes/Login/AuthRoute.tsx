@@ -2,6 +2,9 @@ import React from "react";
 import "./AuthRoute.scss";
 import logo from "../../../assets/images/title_black.png";
 import { motion } from 'framer-motion';
+import FirebaseApp, { FirestoreDB } from '../../../services/Firebase/Firebase';
+import { getAuth, signInWithEmailAndPassword, Auth, UserCredential } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 enum AuthMode {
   SIGN_IN = "SIGN_IN",
@@ -56,7 +59,7 @@ type AUTH_PAGE_CONSTANTS_CONTENT = {
   "INPUT_TYPE_PASSWORD": string
 }
 const AUTH_PAGE_CONSTANTS: AUTH_PAGE_CONSTANTS_CONTENT = {
-  "ANIMATION_MODE_CHANGE_DURATION_MS": 1500,
+  "ANIMATION_MODE_CHANGE_DURATION_MS": 1200,
   "ANIMATION_FAST_DURATION_MS": 100,
   "VARIANT_HOVER_KEY": "ON_HOVER",
   "VARIANT_TAP_KEY": "ON_TAP",
@@ -86,6 +89,44 @@ export default class AuthRoute extends React.PureComponent<
       primaryInputValue: "",
       secondaryInputValue: ""
     };
+    this.authenticate = this.authenticate.bind(this);
+    this.firebaseLogin = this.firebaseLogin.bind(this);
+    this.login = this.login.bind(this);
+    this.signup = this.signup.bind(this);
+  }
+
+  firebaseLogin(): Promise<UserCredential> {
+    const auth: Auth = getAuth(FirebaseApp);
+    return signInWithEmailAndPassword(auth, this.state.primaryInputValue, this.state.secondaryInputValue);
+  }
+
+  login(): void {
+    this.firebaseLogin()
+      .then((usercreds: UserCredential) => {
+        console.log(usercreds);
+      })
+      .catch((error: {message: string}) => {
+        console.log(error.message)
+      });
+  }
+
+  async checkExistingUser(): Promise<boolean> {
+    const docRef = doc(FirestoreDB, "crypts", this.state.secondaryInputValue);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists();
+  }
+
+  signup(): void {
+    this.checkExistingUser().then((result: boolean) => console.log(result ? 'exists' : 'does not exist'));
+  }
+
+  authenticate(e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    const authentication_function: { [key in AuthMode]: (...params: any) => any } = {
+      [AuthMode.SIGN_UP]: this.signup,
+      [AuthMode.SIGN_IN]: this.login
+    }
+    e.preventDefault();
+    authentication_function[this.state.authMode]();
   }
 
   getPrimaryUserInputName(): "email" | "name" {
@@ -130,8 +171,8 @@ export default class AuthRoute extends React.PureComponent<
 
   getAuthSection(): JSX.Element {
     const auth_section_variants = {
-      [AuthMode.SIGN_IN]: { right: 0, transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000) } },
-      [AuthMode.SIGN_UP]: { right: '50%', transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000) } }
+      [AuthMode.SIGN_IN]: { right: 0, transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000), type: "tween", ease: "easeInOut" } },
+      [AuthMode.SIGN_UP]: { right: '50%', transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000), type: "tween", ease: "easeInOut" } }
     };
 
     const submit_button_variants = {
@@ -191,6 +232,7 @@ export default class AuthRoute extends React.PureComponent<
             variants={submit_button_variants}
             whileHover={AUTH_PAGE_CONSTANTS.VARIANT_HOVER_KEY}
             whileTap={AUTH_PAGE_CONSTANTS.VARIANT_TAP_KEY}
+            onClick={this.authenticate}
             type="submit">
             { this.state.authButtonText }
           </motion.button>
@@ -202,8 +244,8 @@ export default class AuthRoute extends React.PureComponent<
   getInfoSection(): JSX.Element {
     
     const info_variants: { [key in AuthMode]: {} } = {
-      [AuthMode.SIGN_IN]: { left: 0, borderRadius: '0px 100px 100px 0px', transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000) } },
-      [AuthMode.SIGN_UP]: { left: '50%', borderRadius: '100px 0px 0px 100px', transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000) } }
+      [AuthMode.SIGN_IN]: { left: 0, borderRadius: '0px 100px 100px 0px', transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000), type: "tween", ease: "easeInOut" } },
+      [AuthMode.SIGN_UP]: { left: '50%', borderRadius: '100px 0px 0px 100px', transition: { duration: (AUTH_PAGE_CONSTANTS.ANIMATION_MODE_CHANGE_DURATION_MS / 1000), type: "tween", ease: "easeInOut" } }
     }
 
     const cta_button_variants: { [key: string]: {} } = {
