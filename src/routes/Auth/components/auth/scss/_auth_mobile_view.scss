@@ -1,0 +1,66 @@
+.signInSpaceDiv {
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .signInTitleDiv {
+
+    .signInTitleCTA {
+      @include retroica_custom_font;
+      text-align: center;
+      font-size: 3.7rem;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    
+    .signInTitleLogo {
+      min-width: 20rem;
+      width: 30rem;
+      max-width: 458px;
+    }
+  }
+
+  .signInForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50%;
+    max-width: 480px;
+
+    input {
+      height: 50px;
+      margin: 10px 0px 10px 0px;
+      border-radius: 8px;
+      @include montserrat_semibold_font;
+      font-size: 1.5rem;
+      color: #696969;
+      background-color: rgba(202, 202, 202, 0.5);
+      padding-left: 30px;
+      padding-right: 30px;
+      box-shadow: none;
+      border: none;
+
+      &::placeholder {
+        opacity: 0.5;
+      }
+    }
+
+    button {
+      margin-top: 15px;
+      width: 15rem;
+      height: 3.5rem;
+      background-color: rgba($color: #000000, $alpha: 0);
+      border: 1px solid #1588CC;
+      box-sizing: border-box;
+      border-radius: 11px;
+      @include montserrat_semibold_font;
+      font-size: 1.7rem;
+      color: #1588CC;
+    }
+  }
+}

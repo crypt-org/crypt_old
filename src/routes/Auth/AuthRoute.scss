@@ -1,0 +1,23 @@
+// Partials
+@import "../../styles/scss/fonts.scss";
+@import "../../styles/scss/palette.scss";
+
+.authPageDiv {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+
+  @import "./components/auth/scss/auth_desktop_view";
+  @import "./components/info/scss/info_desktop_view";
+}
+
+@media only screen and (max-width: 934px) {
+  .authPageDiv {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    
+    @import "./components/auth/scss/auth_mobile_view";
+    @import "./components/info/scss/info_mobile_view";
+  }
+}

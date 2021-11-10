@@ -5,7 +5,7 @@ import {
   Redirect,
   Route
 } from "react-router-dom";
-import AuthRoute from './components/routes/Login/AuthRoute';
+import AuthRoute from './routes/Auth/AuthRoute';
 import SetupRoute from './components/routes/Setup/SetupRoute';
 
 export default class CryptApp extends React.PureComponent {
