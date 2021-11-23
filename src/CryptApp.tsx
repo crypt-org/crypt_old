@@ -6,7 +6,7 @@ import {
   Route
 } from "react-router-dom";
 import AuthRoute from './routes/Auth/AuthRoute';
-import SetupRoute from './components/routes/Setup/SetupRoute';
+import SetupRoute from './routes/Setup/SetupRoute';
 
 export default class CryptApp extends React.PureComponent {
   render(): JSX.Element {

@@ -1,6 +1,6 @@
 import React from "react";
 import logo from "../../../../assets/images/title_black.png";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import FirebaseApp, {
   FirestoreDB,
 } from "../../../../services/Firebase/Firebase";
@@ -22,17 +22,23 @@ import {
   AuthButton,
 } from "../../constants";
 
+enum RegistrationAddOnStatus {
+  SHOW = "show",
+  HIDE = "hide",
+}
+
 export type AuthSectionProps = {
   authMode: AuthMode;
+  transitionState: TransitionState;
   isMobileView: boolean;
   setModeChangeCallback: (callback: () => void) => void;
 };
 export type AuthSectionState = {
-  primaryInputPlaceholder: string;
-  secondaryInputPlaceholder: string;
-  primaryInputValue: string;
+  registrationAddOnStatus: RegistrationAddOnStatus;
+  emailValue: string;
   secondaryInputType: string;
-  secondaryInputValue: string;
+  passwordValue: string;
+  nameValue: string;
   authTitle: string;
   authButtonText: string;
 };
@@ -46,10 +52,10 @@ export default class AuthenticationSection extends React.PureComponent<
     this.state = {
       authTitle: AuthTitle[AuthMode.SIGN_IN],
       authButtonText: AuthButton[AuthMode.SIGN_IN],
-      primaryInputPlaceholder: InputNames.EMAIL,
-      secondaryInputPlaceholder: InputNames.PASSWORD,
-      primaryInputValue: "",
-      secondaryInputValue: "",
+      emailValue: "",
+      nameValue: "",
+      passwordValue: "",
+      registrationAddOnStatus: RegistrationAddOnStatus.HIDE,
       secondaryInputType: InputTypes.PASSWORD,
     };
   }
@@ -57,35 +63,13 @@ export default class AuthenticationSection extends React.PureComponent<
   componentDidMount() {
     // Setup Mode Change Callback
     this.props.setModeChangeCallback(() => {
-      const primaryInputValue: string =
-        this.props.authMode === AuthMode.SIGN_IN
-          ? this.state.secondaryInputValue
-          : "";
-      const secondaryInputValue: string =
-        this.props.authMode === AuthMode.SIGN_UP
-          ? this.state.primaryInputValue
-          : "";
-      const secondaryInputType: string =
-        this.props.authMode === AuthMode.SIGN_IN
-          ? InputTypes.PASSWORD
-          : InputTypes.TEXT;
-      const secondaryInputPlaceholder: string =
-        this.props.authMode === AuthMode.SIGN_IN
-          ? InputNames.PASSWORD
-          : InputNames.EMAIL;
-      const primaryInputPlaceholder: string =
-        this.props.authMode === AuthMode.SIGN_IN
-          ? InputNames.EMAIL
-          : InputNames.NAME;
-
       this.setState({
         authTitle: AuthTitle[this.props.authMode],
         authButtonText: AuthButton[this.props.authMode],
-        primaryInputPlaceholder: primaryInputPlaceholder,
-        secondaryInputPlaceholder: secondaryInputPlaceholder,
-        secondaryInputType: secondaryInputType,
-        primaryInputValue: primaryInputValue,
-        secondaryInputValue: secondaryInputValue,
+        registrationAddOnStatus:
+          this.props.authMode === AuthMode.SIGN_UP
+            ? RegistrationAddOnStatus.SHOW
+            : RegistrationAddOnStatus.HIDE,
       });
     });
   }
@@ -94,8 +78,8 @@ export default class AuthenticationSection extends React.PureComponent<
     const auth: Auth = getAuth(FirebaseApp);
     return signInWithEmailAndPassword(
       auth,
-      this.state.primaryInputValue,
-      this.state.secondaryInputValue
+      this.state.emailValue,
+      this.state.passwordValue
     );
   }
 
@@ -110,7 +94,7 @@ export default class AuthenticationSection extends React.PureComponent<
   }
 
   async checkExistingUser(): Promise<boolean> {
-    const docRef = doc(FirestoreDB, "crypts", this.state.secondaryInputValue);
+    const docRef = doc(FirestoreDB, "crypts", this.state.emailValue);
     const docSnap = await getDoc(docRef);
     return docSnap.exists();
   }
@@ -170,12 +154,41 @@ export default class AuthenticationSection extends React.PureComponent<
           },
     };
 
-    const submit_button_variants = {
+    const registration_addon_variants: { [key: string]: {} } = {
+      [RegistrationAddOnStatus.SHOW]: {
+        height: "50px",
+        paddingLeft: "30px",
+        paddingRight: "30px",
+        opacity: 1,
+        transition: {
+          duratiion: Durations.MODE_CHANGE_MS / 1000,
+        },
+      },
+      [RegistrationAddOnStatus.HIDE]: {
+        lineHeight: "0",
+        padding: "0",
+        border: "0",
+        height: "0",
+        margin: "0",
+        transition: {
+          duratiion: Durations.MODE_CHANGE_MS / 1000,
+        },
+      },
+    };
+
+    const submit_button_variants: { [key: string]: {} } = {
       [TransitionState.FIXED]: {
+        opacity: 1,
         transition: {
           duration: Durations.FAST_MS / 1000,
         },
         backgroundColor: "rgba(255,255,255,1)",
+      },
+      [TransitionState.TRANSITIONING]: {
+        color: ["#1588CC", "rgba(255,255,255,0)", "#1588CC"],
+        transition: {
+          duration: Durations.MODE_CHANGE_MS / 1000,
+        },
       },
       [CommonTransitionVariants.HOVER]: {
         scale: 1.1,
@@ -195,6 +208,7 @@ export default class AuthenticationSection extends React.PureComponent<
 
     return (
       <motion.section
+        layoutId="authLayout"
         animate={
           this.props.authMode === AuthMode.SIGN_IN
             ? AuthMode.SIGN_IN
@@ -204,31 +218,75 @@ export default class AuthenticationSection extends React.PureComponent<
         initial={AuthMode.SIGN_IN}
         className="signInSpaceDiv"
       >
-        <div className="signInTitleDiv">
+        <motion.div className="signInTitleDiv" layoutId="authLayout">
           <motion.p className="signInTitleCTA">{this.state.authTitle}</motion.p>
           <img src={logo} alt="Crypt Logo" className="authTitleLogo" />
-        </div>
+        </motion.div>
         <form className="signInForm">
+          <AnimatePresence>
+            {this.state.registrationAddOnStatus ===
+              RegistrationAddOnStatus.SHOW && (
+              <motion.input
+                layoutId="authLayout"
+                key="name_input"
+                name={InputNames.NAME}
+                initial={RegistrationAddOnStatus.HIDE}
+                animate={this.state.registrationAddOnStatus}
+                variants={registration_addon_variants}
+                exit={RegistrationAddOnStatus.HIDE}
+                type="text"
+                placeholder={InputNames.NAME}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  this.setState({ nameValue: e.target.value })
+                }
+                value={this.state.nameValue}
+              />
+            )}
+          </AnimatePresence>
           <motion.input
-            name={this.state.primaryInputPlaceholder}
+            name={InputNames.EMAIL}
             type="text"
-            placeholder={this.state.primaryInputPlaceholder}
+            placeholder={InputNames.EMAIL}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              this.setState({ primaryInputValue: e.target.value })
+              this.setState({ emailValue: e.target.value })
             }
-            value={this.state.primaryInputValue}
+            value={this.state.emailValue}
+            layoutId="authLayout"
           />
-          <motion.input
-            name={this.state.secondaryInputPlaceholder}
-            type={this.state.secondaryInputType}
-            placeholder={this.state.secondaryInputPlaceholder}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              this.setState({ secondaryInputValue: e.target.value })
-            }
-            value={this.state.secondaryInputValue}
-          />
+          <div className="passwordInputContainer">
+            <motion.input
+              name={InputNames.PASSWORD}
+              type="password"
+              placeholder={InputNames.PASSWORD}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                this.setState({ passwordValue: e.target.value })
+              }
+              value={this.state.passwordValue}
+              layoutId="authLayout"
+            />
+            <AnimatePresence>
+              {this.state.registrationAddOnStatus ===
+                RegistrationAddOnStatus.SHOW && (
+                <motion.div
+                  key="passwordStrength"
+                  initial={{ width: "0%" }}
+                  animate={{
+                    width: "20%",
+                    height: "10px",
+                    transition: {
+                      duration: Durations.MODE_CHANGE_MS / 1000,
+                    },
+                  }}
+                  exit={{ height: "0", padding: "0", margin: "0" }}
+                  className="passwordStrengthMeter"
+                  layoutId="authLayout"
+                />
+              )}
+            </AnimatePresence>
+          </div>
           <motion.button
             initial={TransitionState.FIXED}
+            animate={this.props.transitionState}
             transition={{
               duration: Durations.FAST_MS / 1000,
             }}
@@ -237,6 +295,7 @@ export default class AuthenticationSection extends React.PureComponent<
             whileTap={CommonTransitionVariants.TAP}
             onClick={this.authenticate}
             type="submit"
+            layoutId="authLayout"
           >
             {this.state.authButtonText}
           </motion.button>

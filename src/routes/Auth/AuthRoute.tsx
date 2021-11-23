@@ -91,6 +91,7 @@ export default class AuthRoute extends React.PureComponent<
 
         <AuthSection
           isMobileView={this.state.isMobileView}
+          transitionState={this.state.transitionState}
           authMode={this.state.authMode}
           setModeChangeCallback={(callback: () => void) =>
             this.setState({ authSectionModeChangeCallback: callback })

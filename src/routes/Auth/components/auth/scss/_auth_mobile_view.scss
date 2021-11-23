@@ -29,12 +29,31 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 50%;
+    width: 80%;
     max-width: 480px;
+
+    .passwordInputContainer {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      width: 100%;
+      gap: 2px;
+      transition: all 1s;
+
+      .passwordStrengthMeter {
+        height: 10px;
+        width: 80%;
+        background-color: aquamarine;
+        border-radius: 20px;
+      }
+
+    }
 
     input {
       height: 50px;
-      margin: 10px 0px 10px 0px;
+      box-sizing: border-box;
+      width: 100%;
+      margin-top: 15px;
       border-radius: 8px;
       @include montserrat_semibold_font;
       font-size: 1.5rem;
