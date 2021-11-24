@@ -43,7 +43,6 @@
       .passwordStrengthMeter {
         height: 10px;
         width: 80%;
-        background-color: aquamarine;
         border-radius: 20px;
       }
 
@@ -66,6 +65,10 @@
 
       &::placeholder {
         opacity: 0.5;
+      }
+
+      &:focus {
+        outline: none !important;
       }
     }
 
