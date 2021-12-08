@@ -4,8 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import zxcvbn from "zxcvbn";
 import FirebaseApp, {
   FirestoreDB,
-} from "../../../../services/Firebase/Firebase";
+} from "../../../../services/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { SignUpData } from "./logic";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -22,6 +23,7 @@ import {
   AuthTitle,
   AuthButton,
 } from "../../constants";
+import { signup, login } from "./logic";
 
 enum RegistrationAddOnStatus {
   SHOW = "show",
@@ -78,8 +80,6 @@ export default class AuthenticationSection extends React.PureComponent<
     };
 
     this.authenticate = this.authenticate.bind(this);
-    this.signup = this.signup.bind(this);
-    this.login = this.login.bind(this);
   }
 
   componentDidMount() {
@@ -92,28 +92,32 @@ export default class AuthenticationSection extends React.PureComponent<
           this.props.authMode === AuthMode.SIGN_UP
             ? RegistrationAddOnStatus.SHOW
             : RegistrationAddOnStatus.HIDE,
-        nameValue: ""
+        nameValue: "",
       });
     });
   }
 
   evaluateSignUpPassword(newPass: string): void {
-    const strengthPercen: number = newPass === "" ? 0 : ((zxcvbn(newPass).score / 4) * 90) + 10; // Scale output between 10 & 100 if newPass is not empty
+    const strengthPercen: number =
+      newPass === "" ? 0 : (zxcvbn(newPass).score / 4) * 90 + 10; // Scale output between 10 & 100 if newPass is not empty
     this.setState({ passwordStrengthWidth: strengthPercen });
   }
 
   fetchPasswordBarColour(): string {
     if (this.state.passwordStrengthWidth < 50) {
-      return PasswordStrengthBarColours.WEAK
+      return PasswordStrengthBarColours.WEAK;
     } else if (this.state.passwordStrengthWidth < 99) {
-      return PasswordStrengthBarColours.MEDIUM
+      return PasswordStrengthBarColours.MEDIUM;
     } else {
-      return PasswordStrengthBarColours.STRONG
+      return PasswordStrengthBarColours.STRONG;
     }
   }
 
   fetchPasswordInputColour(): string {
-    if (this.props.authMode === AuthMode.SIGN_IN || this.state.passwordStrengthWidth === 0) {
+    if (
+      this.props.authMode === AuthMode.SIGN_IN ||
+      this.state.passwordStrengthWidth === 0
+    ) {
       return PasswordInputColours.DEFAULT;
     } else if (this.state.passwordStrengthWidth < 50) {
       return PasswordInputColours.WEAK;
@@ -133,40 +137,37 @@ export default class AuthenticationSection extends React.PureComponent<
     );
   }
 
-  login(): void {
-    this.firebaseLogin()
-      .then((usercreds: UserCredential) => {
-        console.log(usercreds);
-      })
-      .catch((error: { message: string }) => {
-        console.log(error.message);
-      });
-  }
-
-  async checkExistingUser(): Promise<boolean> {
-    const docRef = doc(FirestoreDB, "crypts", this.state.emailValue);
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists();
-  }
-
-  signup(): void {
-    if (this.state.passwordStrengthWidth !== 100) {
-      alert("You need a stronger password :(");
-      return;
-    }
-    this.checkExistingUser().then((result: boolean) =>
-      console.log(result ? "exists" : "does not exist")
-    );
-  }
-
   authenticate(e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
     e.preventDefault();
+    const callback_function: {
+      [key in AuthMode]: (...params: any) => any;
+    } = {
+      [AuthMode.SIGN_UP]: (
+        signUpData: SignUpData | undefined,
+        err: string | undefined
+      ) => {
+        if (err) {
+          console.error(err)
+          return;
+        }
+        console.log(signUpData);
+      },
+      [AuthMode.SIGN_IN]: login,
+    };
     const authentication_function: {
       [key in AuthMode]: (...params: any) => any;
     } = {
-      [AuthMode.SIGN_UP]: this.signup,
-      [AuthMode.SIGN_IN]: this.login,
+      [AuthMode.SIGN_UP]: () =>
+        signup(
+          this.state.nameValue,
+          this.state.emailValue,
+          this.state.passwordValue,
+          callback_function[AuthMode.SIGN_UP]
+        ),
+      [AuthMode.SIGN_IN]: () =>
+        login(this.state.emailValue, this.state.passwordValue),
     };
+
     authentication_function[this.props.authMode]();
   }
 
@@ -310,14 +311,19 @@ export default class AuthenticationSection extends React.PureComponent<
           <div className="passwordInputContainer">
             <motion.input
               name={InputNames.PASSWORD}
-              type={this.props.authMode === AuthMode.SIGN_UP && this.state.passwordVisibility ? "text" : "password"}
+              type={
+                this.props.authMode === AuthMode.SIGN_UP &&
+                this.state.passwordVisibility
+                  ? "text"
+                  : "password"
+              }
               placeholder={InputNames.PASSWORD}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 this.setState({ passwordValue: e.target.value });
                 this.evaluateSignUpPassword(e.target.value);
               }}
               initial={{ backgroundColor: this.fetchPasswordInputColour() }}
-              animate={{ backgroundColor:  this.fetchPasswordInputColour() }}
+              animate={{ backgroundColor: this.fetchPasswordInputColour() }}
               onHoverStart={() => this.setState({ passwordVisibility: true })}
               onHoverEnd={() => this.setState({ passwordVisibility: false })}
               value={this.state.passwordValue}
@@ -328,7 +334,10 @@ export default class AuthenticationSection extends React.PureComponent<
                 RegistrationAddOnStatus.SHOW && (
                 <motion.div
                   key="passwordStrength"
-                  initial={{ width: "0%", backgroundColor: PasswordStrengthBarColours.WEAK }}
+                  initial={{
+                    width: "0%",
+                    backgroundColor: PasswordStrengthBarColours.WEAK,
+                  }}
                   animate={{
                     width: `${this.state.passwordStrengthWidth}%`,
                     height: "10px",

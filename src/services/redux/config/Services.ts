@@ -1,5 +1,5 @@
 import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import AuthService from "../../Auth/Auth";
+import AuthService from "../../fireauth";
 
 // State Data
 interface ServiceState {
