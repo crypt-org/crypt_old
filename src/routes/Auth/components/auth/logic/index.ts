@@ -1,6 +1,4 @@
-import FirebaseApp, {
-  FirestoreDB,
-} from "../../../../../services/firebase";
+import FirebaseApp, { FirestoreDB } from "../../../../../services/firebase";
 import {
   doc,
   getDocs,
@@ -79,9 +77,9 @@ async function generateSignUpData(
       }
     );
     const pub: string = pki.publicKeyToPem(keypair.publicKey);
-    console.log(password)
-    console.log(encPri)
-    console.log(pub)
+    console.log(password);
+    console.log(encPri);
+    console.log(pub);
     onSignUpDataGenerationComplete({ pubKey: pub, privKey: encPri });
   });
 }
@@ -90,7 +88,10 @@ export async function signup(
   name: string,
   email: string,
   password: string,
-  onSignUpComplete: (signUpData: SignUpData | undefined, err: string | undefined) => void
+  onSignUpComplete: (
+    signUpData: SignUpData | undefined,
+    err: string | undefined
+  ) => void
 ): Promise<void> {
   const callback: (generatedKeyData: KeyData) => void = (
     generatedKeyData: KeyData
@@ -102,10 +103,10 @@ export async function signup(
           keys: generatedKeyData,
         }
       : undefined;
-      const err: string | undefined = !!generatedKeyData
+    const err: string | undefined = !!generatedKeyData
       ? undefined
       : "Unable to generate account metadata";
-      onSignUpComplete(signUpData, err);
+    onSignUpComplete(signUpData, err);
   };
 
   await generateSignUpData(password, callback);
