@@ -145,23 +145,23 @@ export default class InfoSection extends React.PureComponent<
         }
         variants={info_variants}
         initial={AuthMode.SIGN_IN}
-        className="infospaceDiv"
+        className='infospaceDiv'
       >
-        <section className="welcomeSection">
-          <p className="welcomePara">Welcome</p>
-          <p className="welcomeDescriptionPara">
+        <section className='welcomeSection'>
+          <p className='welcomePara'>Welcome</p>
+          <p className='welcomeDescriptionPara'>
             Your one stop solution for saving your passwords (lets please change
             this lmao)
           </p>
         </section>
-        <section className="authCallToActionSection">
+        <section className='authCallToActionSection'>
           <motion.p
             animate={
               this.props.transitionState === TransitionState.TRANSITIONING
                 ? TransitionState.TRANSITIONING
                 : TransitionState.FIXED
             }
-            className="auth_CTA_question_para"
+            className='auth_CTA_question_para'
             variants={cta_question_variants}
           >
             {this.state.ctaQuestionText}
@@ -174,9 +174,9 @@ export default class InfoSection extends React.PureComponent<
             }
             variants={cta_button_variants}
             transition={{ duration: 0.1 }}
-            whileHover="ON_HOVER"
+            whileHover='ON_HOVER'
             whileTap={{ scale: 0.9 }}
-            className="auth_CTA_button"
+            className='auth_CTA_button'
             onClick={this.props.changeAuthMode}
           >
             {this.state.ctaButtonText}
