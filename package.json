@@ -32,7 +32,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "prepare": "husky install"
   },
   "eslintConfig": {
     "extends": [
@@ -55,6 +56,12 @@
   "devDependencies": {
     "@types/node-forge": "^0.10.10",
     "@types/zxcvbn": "^4.4.1",
+    "husky": ">=6",
+    "lint-staged": ">=10",
+    "prettier": "2.5.1",
     "sass": "^1.42.1"
+  },
+  "lint-staged": {
+    "*.{js,css,md}": "prettier --write"
   }
 }

@@ -1,12 +1,12 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React from 'react';
+import { motion } from 'framer-motion';
 import {
   AuthMode,
   Durations,
   TransitionState,
   AuthButton,
   CTAQuestion,
-} from "../../constants";
+} from '../../constants';
 
 export type InfoSectionProps = {
   isMobileView: boolean;
@@ -49,43 +49,43 @@ export default class InfoSection extends React.PureComponent<
       [AuthMode.SIGN_IN]: this.props.isMobileView
         ? {
             left: 0,
-            borderRadius: "10vw 10vw 0px 0px",
-            boxShadow: "0px -3px 10px rgba(0, 0, 0, 0.25)",
+            borderRadius: '10vw 10vw 0px 0px',
+            boxShadow: '0px -3px 10px rgba(0, 0, 0, 0.25)',
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           }
         : {
             left: 0,
-            borderRadius: "0vw 4vw 4vw 0vw",
-            boxShadow: "9px 3px 10px rgba(0, 0, 0, 0.25)",
+            borderRadius: '0vw 4vw 4vw 0vw',
+            boxShadow: '9px 3px 10px rgba(0, 0, 0, 0.25)',
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           },
       [AuthMode.SIGN_UP]: this.props.isMobileView
         ? {
             left: 0,
-            borderRadius: "10vw 10vw 0px 0px",
-            boxShadow: "0px -3px 10px rgba(0, 0, 0, 0.25)",
+            borderRadius: '10vw 10vw 0px 0px',
+            boxShadow: '0px -3px 10px rgba(0, 0, 0, 0.25)',
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           }
         : {
-            left: "50%",
-            borderRadius: "4vw 0vw 0vw 4vw",
-            boxShadow: "-9px 3px 10px rgba(0, 0, 0, 0.25)",
+            left: '50%',
+            borderRadius: '4vw 0vw 0vw 4vw',
+            boxShadow: '-9px 3px 10px rgba(0, 0, 0, 0.25)',
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           },
     };
@@ -95,21 +95,21 @@ export default class InfoSection extends React.PureComponent<
         transition: {
           duration: Durations.FAST_MS / 1000,
         },
-        color: "rgba(255,255,255,1)",
+        color: 'rgba(255,255,255,1)',
       },
       [TransitionState.TRANSITIONING]: {
         transition: {
           duration: Durations.MODE_CHANGE_MS / 1000,
         },
         color: [
-          "rgba(255,255,255,1)",
-          "rgba(255,255,255,0)",
-          "rgba(255,255,255,1)",
+          'rgba(255,255,255,1)',
+          'rgba(255,255,255,0)',
+          'rgba(255,255,255,1)',
         ],
       },
       ON_HOVER: {
-        color: "#073fda",
-        backgroundColor: "rgba(255,255,255,1)",
+        color: '#073fda',
+        backgroundColor: 'rgba(255,255,255,1)',
         scale: 1.1,
         transition: {
           duration: Durations.FAST_MS / 1000,
@@ -122,16 +122,16 @@ export default class InfoSection extends React.PureComponent<
         transition: {
           duration: Durations.FAST_MS / 1000,
         },
-        color: "rgba(255,255,255,1)",
+        color: 'rgba(255,255,255,1)',
       },
       [TransitionState.TRANSITIONING]: {
         transition: {
           duration: Durations.MODE_CHANGE_MS / 1000,
         },
         color: [
-          "rgba(255,255,255,1)",
-          "rgba(255,255,255,0)",
-          "rgba(255,255,255,1)",
+          'rgba(255,255,255,1)',
+          'rgba(255,255,255,0)',
+          'rgba(255,255,255,1)',
         ],
       },
     };
