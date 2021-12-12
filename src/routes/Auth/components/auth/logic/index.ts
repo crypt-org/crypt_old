@@ -1,4 +1,4 @@
-import FirebaseApp, { FirestoreDB } from "../../../../../services/firebase";
+import FirebaseApp, { FirestoreDB } from '../../../../../services/firebase';
 import {
   doc,
   getDocs,
@@ -7,15 +7,19 @@ import {
   query,
   Query,
   where,
-} from "firebase/firestore";
+} from 'firebase/firestore';
 import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   Auth,
   UserCredential,
-} from "firebase/auth";
-import forge, { pki } from "node-forge";
+} from 'firebase/auth';
+import forge, { pki } from 'node-forge';
+import {
+  signInWithFireauth,
+  signUpWithFireauth,
+} from '../../../../../services/fireauth';
 
 export interface LoginData {
   user: string;
@@ -31,16 +35,8 @@ export interface SignUpData extends LoginData {
   keys: KeyData;
 }
 
-async function firebaseLogin(
-  email: string,
-  password: string
-): Promise<UserCredential> {
-  const auth: Auth = getAuth(FirebaseApp);
-  return signInWithEmailAndPassword(auth, email, password);
-}
-
 export function login(email: string, password: string): void {
-  firebaseLogin(email, password)
+  signInWithFireauth(email, password)
     .then((usercreds: UserCredential) => {
       console.log(usercreds);
     })
@@ -51,37 +47,42 @@ export function login(email: string, password: string): void {
 
 async function isExistingUser(email: string): Promise<boolean> {
   const existingUserQuery: Query<any> = query(
-    collection(FirestoreDB, "users"),
-    where("email", "array-contains", email)
+    collection(FirestoreDB, 'users'),
+    where('email', 'array-contains', email)
   );
   const docSnap = await getDocs(existingUserQuery);
   return !docSnap.empty;
 }
 
 async function generateSignUpData(
+  email: string,
   password: string,
   onSignUpDataGenerationComplete: (generatedKeyData: KeyData) => void
 ): Promise<void> {
   const rsa: typeof pki.rsa = forge.pki.rsa;
-  rsa.generateKeyPair({ bits: 2048, workers: 2 }, function (err, keypair) {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    const pki: typeof forge.pki = forge.pki;
-    const encPri: string = pki.encryptRsaPrivateKey(
-      keypair.privateKey,
-      password,
-      {
-        algorithm: "aes256",
+  rsa.generateKeyPair(
+    { bits: 2048, workers: 2 },
+    async function (err, keypair) {
+      if (err) {
+        console.error(err);
+        return;
       }
-    );
-    const pub: string = pki.publicKeyToPem(keypair.publicKey);
-    console.log(password);
-    console.log(encPri);
-    console.log(pub);
-    onSignUpDataGenerationComplete({ pubKey: pub, privKey: encPri });
-  });
+      const pki: typeof forge.pki = forge.pki;
+      const encPri: string = pki.encryptRsaPrivateKey(
+        keypair.privateKey,
+        password,
+        {
+          algorithm: 'aes256',
+        }
+      );
+      const pub: string = pki.publicKeyToPem(keypair.publicKey);
+      const credentials = await signUpWithFireauth(email, password);
+      console.log(password);
+      console.log(encPri);
+      console.log(pub);
+      onSignUpDataGenerationComplete({ pubKey: pub, privKey: encPri });
+    }
+  );
 }
 
 export async function signup(
@@ -105,10 +106,10 @@ export async function signup(
       : undefined;
     const err: string | undefined = !!generatedKeyData
       ? undefined
-      : "Unable to generate account metadata";
+      : 'Unable to generate account metadata';
     onSignUpComplete(signUpData, err);
   };
 
-  await generateSignUpData(password, callback);
+  await generateSignUpData(email, password, callback);
   return;
 }

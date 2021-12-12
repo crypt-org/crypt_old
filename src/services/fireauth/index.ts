@@ -1,7 +1,24 @@
+import FirebaseApp from '../firebase';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  Auth,
+  UserCredential,
+} from 'firebase/auth';
 
-export default class AuthService {
+export function signInWithFireauth(
+  email: string,
+  password: string
+): Promise<UserCredential> {
+  const auth: Auth = getAuth(FirebaseApp);
+  return signInWithEmailAndPassword(auth, email, password);
+}
 
-  sayHello() {
-    return 'hello';
-  }
+export function signUpWithFireauth(
+  email: string,
+  password: string
+): Promise<UserCredential> {
+  const auth: Auth = getAuth(FirebaseApp);
+  return createUserWithEmailAndPassword(auth, email, password);
 }

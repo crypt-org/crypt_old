@@ -1,18 +1,9 @@
-import React from "react";
-import logo from "../../../../assets/images/title_black.png";
-import { AnimatePresence, motion } from "framer-motion";
-import zxcvbn from "zxcvbn";
-import FirebaseApp, {
-  FirestoreDB,
-} from "../../../../services/firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { SignUpData } from "./logic";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  Auth,
-  UserCredential,
-} from "firebase/auth";
+import React from 'react';
+import logo from '../../../../assets/images/title_black.png';
+import { AnimatePresence, motion } from 'framer-motion';
+import zxcvbn from 'zxcvbn';
+import { doc, getDoc } from 'firebase/firestore';
+import { SignUpData } from './logic';
 import {
   AuthMode,
   Durations,
@@ -22,25 +13,25 @@ import {
   InputTypes,
   AuthTitle,
   AuthButton,
-} from "../../constants";
-import { signup, login } from "./logic";
+} from '../../constants';
+import { signup, login } from './logic';
 
 enum RegistrationAddOnStatus {
-  SHOW = "show",
-  HIDE = "hide",
+  SHOW = 'show',
+  HIDE = 'hide',
 }
 
 enum PasswordStrengthBarColours {
-  WEAK = "#DD5D5D",
-  MEDIUM = "#FFC700",
-  STRONG = "#23EB4F",
+  WEAK = '#DD5D5D',
+  MEDIUM = '#FFC700',
+  STRONG = '#23EB4F',
 }
 
 enum PasswordInputColours {
-  DEFAULT = "#CACACA7F",
-  WEAK = "#DD5D5D96",
-  MEDIUM = "#FFC70096",
-  STRONG = "#23EB4F96",
+  DEFAULT = '#CACACA7F',
+  WEAK = '#DD5D5D96',
+  MEDIUM = '#FFC70096',
+  STRONG = '#23EB4F96',
 }
 
 export type AuthSectionProps = {
@@ -70,11 +61,11 @@ export default class AuthenticationSection extends React.PureComponent<
     this.state = {
       authTitle: AuthTitle[AuthMode.SIGN_IN],
       authButtonText: AuthButton[AuthMode.SIGN_IN],
-      emailValue: "",
+      emailValue: '',
       passwordStrengthWidth: 0,
       passwordVisibility: false,
-      nameValue: "",
-      passwordValue: "",
+      nameValue: '',
+      passwordValue: '',
       registrationAddOnStatus: RegistrationAddOnStatus.HIDE,
       secondaryInputType: InputTypes.PASSWORD,
     };
@@ -92,14 +83,14 @@ export default class AuthenticationSection extends React.PureComponent<
           this.props.authMode === AuthMode.SIGN_UP
             ? RegistrationAddOnStatus.SHOW
             : RegistrationAddOnStatus.HIDE,
-        nameValue: "",
+        nameValue: '',
       });
     });
   }
 
   evaluateSignUpPassword(newPass: string): void {
     const strengthPercen: number =
-      newPass === "" ? 0 : (zxcvbn(newPass).score / 4) * 90 + 10; // Scale output between 10 & 100 if newPass is not empty
+      newPass === '' ? 0 : (zxcvbn(newPass).score / 4) * 90 + 10; // Scale output between 10 & 100 if newPass is not empty
     this.setState({ passwordStrengthWidth: strengthPercen });
   }
 
@@ -128,15 +119,6 @@ export default class AuthenticationSection extends React.PureComponent<
     }
   }
 
-  firebaseLogin(): Promise<UserCredential> {
-    const auth: Auth = getAuth(FirebaseApp);
-    return signInWithEmailAndPassword(
-      auth,
-      this.state.emailValue,
-      this.state.passwordValue
-    );
-  }
-
   authenticate(e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
     e.preventDefault();
     const callback_function: {
@@ -147,7 +129,7 @@ export default class AuthenticationSection extends React.PureComponent<
         err: string | undefined
       ) => {
         if (err) {
-          console.error(err)
+          console.error(err);
           return;
         }
         console.log(signUpData);
@@ -178,16 +160,16 @@ export default class AuthenticationSection extends React.PureComponent<
             right: 0,
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           }
         : {
             right: 0,
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           },
       [AuthMode.SIGN_UP]: this.props.isMobileView
@@ -195,36 +177,36 @@ export default class AuthenticationSection extends React.PureComponent<
             right: 0,
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           }
         : {
-            right: "50%",
+            right: '50%',
             transition: {
               duration: Durations.MODE_CHANGE_MS / 1000,
-              type: "tween",
-              ease: "easeInOut",
+              type: 'tween',
+              ease: 'easeInOut',
             },
           },
     };
 
     const registration_addon_variants: { [key: string]: {} } = {
       [RegistrationAddOnStatus.SHOW]: {
-        height: "50px",
-        paddingLeft: "30px",
-        paddingRight: "30px",
+        height: '50px',
+        paddingLeft: '30px',
+        paddingRight: '30px',
         opacity: 1,
         transition: {
           duratiion: Durations.MODE_CHANGE_MS / 1000,
         },
       },
       [RegistrationAddOnStatus.HIDE]: {
-        lineHeight: "0",
-        padding: "0",
-        border: "0",
-        height: "0",
-        margin: "0",
+        lineHeight: '0',
+        padding: '0',
+        border: '0',
+        height: '0',
+        margin: '0',
         transition: {
           duratiion: Durations.MODE_CHANGE_MS / 1000,
         },
@@ -237,18 +219,18 @@ export default class AuthenticationSection extends React.PureComponent<
         transition: {
           duration: Durations.FAST_MS / 1000,
         },
-        backgroundColor: "rgba(255,255,255,1)",
+        backgroundColor: 'rgba(255,255,255,1)',
       },
       [TransitionState.TRANSITIONING]: {
-        color: ["#1588CC", "rgba(255,255,255,0)", "#1588CC"],
+        color: ['#1588CC', 'rgba(255,255,255,0)', '#1588CC'],
         transition: {
           duration: Durations.MODE_CHANGE_MS / 1000,
         },
       },
       [CommonTransitionVariants.HOVER]: {
         scale: 1.1,
-        color: "rgba(255,255,255,1)",
-        backgroundColor: "#1588CC",
+        color: 'rgba(255,255,255,1)',
+        backgroundColor: '#1588CC',
         transition: {
           duration: Durations.FAST_MS / 1000,
         },
@@ -263,7 +245,7 @@ export default class AuthenticationSection extends React.PureComponent<
 
     return (
       <motion.section
-        layoutId="authLayout"
+        layoutId='authLayout'
         animate={
           this.props.authMode === AuthMode.SIGN_IN
             ? AuthMode.SIGN_IN
@@ -271,25 +253,25 @@ export default class AuthenticationSection extends React.PureComponent<
         }
         variants={auth_section_variants}
         initial={AuthMode.SIGN_IN}
-        className="signInSpaceDiv"
+        className='signInSpaceDiv'
       >
-        <motion.div className="signInTitleDiv" layoutId="authLayout">
-          <motion.p className="signInTitleCTA">{this.state.authTitle}</motion.p>
-          <img src={logo} alt="Crypt Logo" className="authTitleLogo" />
+        <motion.div className='signInTitleDiv' layoutId='authLayout'>
+          <motion.p className='signInTitleCTA'>{this.state.authTitle}</motion.p>
+          <img src={logo} alt='Crypt Logo' className='authTitleLogo' />
         </motion.div>
-        <form className="signInForm">
+        <form className='signInForm'>
           <AnimatePresence>
             {this.state.registrationAddOnStatus ===
               RegistrationAddOnStatus.SHOW && (
               <motion.input
-                layoutId="authLayout"
-                key="name_input"
+                layoutId='authLayout'
+                key='name_input'
                 name={InputNames.NAME}
                 initial={RegistrationAddOnStatus.HIDE}
                 animate={this.state.registrationAddOnStatus}
                 variants={registration_addon_variants}
                 exit={RegistrationAddOnStatus.HIDE}
-                type="text"
+                type='text'
                 placeholder={InputNames.NAME}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   this.setState({ nameValue: e.target.value })
@@ -300,22 +282,22 @@ export default class AuthenticationSection extends React.PureComponent<
           </AnimatePresence>
           <motion.input
             name={InputNames.EMAIL}
-            type="text"
+            type='text'
             placeholder={InputNames.EMAIL}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               this.setState({ emailValue: e.target.value })
             }
             value={this.state.emailValue}
-            layoutId="authLayout"
+            layoutId='authLayout'
           />
-          <div className="passwordInputContainer">
+          <div className='passwordInputContainer'>
             <motion.input
               name={InputNames.PASSWORD}
               type={
                 this.props.authMode === AuthMode.SIGN_UP &&
                 this.state.passwordVisibility
-                  ? "text"
-                  : "password"
+                  ? 'text'
+                  : 'password'
               }
               placeholder={InputNames.PASSWORD}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,28 +309,28 @@ export default class AuthenticationSection extends React.PureComponent<
               onHoverStart={() => this.setState({ passwordVisibility: true })}
               onHoverEnd={() => this.setState({ passwordVisibility: false })}
               value={this.state.passwordValue}
-              layoutId="authLayout"
+              layoutId='authLayout'
             />
             <AnimatePresence>
               {this.state.registrationAddOnStatus ===
                 RegistrationAddOnStatus.SHOW && (
                 <motion.div
-                  key="passwordStrength"
+                  key='passwordStrength'
                   initial={{
-                    width: "0%",
+                    width: '0%',
                     backgroundColor: PasswordStrengthBarColours.WEAK,
                   }}
                   animate={{
                     width: `${this.state.passwordStrengthWidth}%`,
-                    height: "10px",
+                    height: '10px',
                     backgroundColor: this.fetchPasswordBarColour(),
                     transition: {
                       duration: Durations.MODE_CHANGE_MS / 2000,
                     },
                   }}
-                  exit={{ height: "0", padding: "0", margin: "0" }}
-                  className="passwordStrengthMeter"
-                  layoutId="authLayout"
+                  exit={{ height: '0', padding: '0', margin: '0' }}
+                  className='passwordStrengthMeter'
+                  layoutId='authLayout'
                 />
               )}
             </AnimatePresence>
@@ -363,8 +345,8 @@ export default class AuthenticationSection extends React.PureComponent<
             whileHover={CommonTransitionVariants.HOVER}
             whileTap={CommonTransitionVariants.TAP}
             onClick={this.authenticate}
-            type="submit"
-            layoutId="authLayout"
+            type='submit'
+            layoutId='authLayout'
           >
             {this.state.authButtonText}
           </motion.button>
