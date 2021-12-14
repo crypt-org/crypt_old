@@ -3,11 +3,15 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import CryptApp from './CryptApp';
 import reportWebVitals from './reportWebVitals';
+import { Provider } from 'react-redux';
+import store from './services/redux/Redux';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <CryptApp />
-  </React.StrictMode>,
+  <Provider store={store}>
+    <React.StrictMode>
+      <CryptApp />
+    </React.StrictMode>
+  </Provider>,
   document.getElementById('root')
 );
 

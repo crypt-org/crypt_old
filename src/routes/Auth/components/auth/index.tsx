@@ -2,7 +2,6 @@ import React from 'react';
 import logo from '../../../../assets/images/title_black.png';
 import { AnimatePresence, motion } from 'framer-motion';
 import zxcvbn from 'zxcvbn';
-import { doc, getDoc } from 'firebase/firestore';
 import { SignUpData } from './logic';
 import {
   AuthMode,

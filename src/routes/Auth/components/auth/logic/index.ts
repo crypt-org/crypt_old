@@ -1,25 +1,6 @@
-import FirebaseApp, { FirestoreDB } from '../../../../../services/firebase';
-import {
-  doc,
-  getDocs,
-  setDoc,
-  collection,
-  query,
-  Query,
-  where,
-} from 'firebase/firestore';
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  Auth,
-  UserCredential,
-} from 'firebase/auth';
+import { UserCredential } from 'firebase/auth';
 import forge, { pki } from 'node-forge';
-import {
-  signInWithFireauth,
-  signUpWithFireauth,
-} from '../../../../../services/fireauth';
+import { signInWithFireauth } from '../../../../../services/fireauth';
 
 export interface LoginData {
   user: string;
@@ -45,15 +26,6 @@ export function login(email: string, password: string): void {
     });
 }
 
-async function isExistingUser(email: string): Promise<boolean> {
-  const existingUserQuery: Query<any> = query(
-    collection(FirestoreDB, 'users'),
-    where('email', 'array-contains', email)
-  );
-  const docSnap = await getDocs(existingUserQuery);
-  return !docSnap.empty;
-}
-
 async function generateSignUpData(
   email: string,
   password: string,
@@ -76,7 +48,6 @@ async function generateSignUpData(
         }
       );
       const pub: string = pki.publicKeyToPem(keypair.publicKey);
-      const credentials = await signUpWithFireauth(email, password);
       console.log(password);
       console.log(encPri);
       console.log(pub);
