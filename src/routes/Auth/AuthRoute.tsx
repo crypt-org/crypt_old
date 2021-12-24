@@ -16,6 +16,7 @@ export type AuthPageState = {
   isMobileView: boolean;
   authSectionModeChangeCallback?: () => void;
   infoSectionModeChangeCallback?: () => void;
+  resizeCallback: () => void;
 };
 
 export default class AuthRoute extends React.PureComponent<
@@ -30,20 +31,18 @@ export default class AuthRoute extends React.PureComponent<
       isMobileView: isMobileView(),
       authSectionModeChangeCallback: undefined,
       infoSectionModeChangeCallback: undefined,
+      resizeCallback: () => this.setState({ isMobileView: isMobileView() })
     };
     this.changeAuthMode = this.changeAuthMode.bind(this);
   }
 
   componentDidMount() {
-    window.addEventListener("resize", () =>
-      this.setState({ isMobileView: isMobileView() })
-    );
+    // On viewport resize, isMobileView is computed
+    window.addEventListener("resize", this.state.resizeCallback);
   }
 
   componentWillUnmount() {
-    window.addEventListener("resize", () =>
-      this.setState({ isMobileView: isMobileView() })
-    );
+    window.removeEventListener("resize", this.state.resizeCallback);
   }
 
   changeAuthMode(): void {

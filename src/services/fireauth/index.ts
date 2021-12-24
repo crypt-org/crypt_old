@@ -15,10 +15,20 @@ export function signInWithFireauth(
   return signInWithEmailAndPassword(auth, email, password);
 }
 
-export function signUpWithFireauth(
+export async function signUpWithFireauth(
   email: string,
   password: string
-): Promise<UserCredential> {
+): Promise<UserCredential | undefined> {
   const auth: Auth = getAuth(FirebaseApp);
-  return createUserWithEmailAndPassword(auth, email, password);
+  try {
+    const creds: UserCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    return creds;
+  } catch (err: any) {
+    console.error(err.message);
+    return undefined;
+  }
 }

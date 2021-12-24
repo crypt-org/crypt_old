@@ -10,13 +10,14 @@ export interface LoginData {
   email: string;
 }
 
-export interface KeyData {
+export interface MetaData {
   pubKey: string;
   privKey: string;
+  uid: string;
 }
 
 export interface SignUpData extends LoginData {
-  keys: KeyData;
+  metadata: MetaData;
 }
 
 export function login(email: string, password: string): void {
@@ -32,7 +33,7 @@ export function login(email: string, password: string): void {
 async function generateSignUpData(
   email: string,
   password: string,
-  onSignUpDataGenerationComplete: (generatedKeyData: KeyData) => void,
+  onSignUpDataGenerationComplete: (generatedMetaData: MetaData) => void,
   credentials: UserCredential
 ): Promise<void> {
   const rsa: typeof pki.rsa = forge.pki.rsa;
@@ -55,7 +56,14 @@ async function generateSignUpData(
       console.log(password);
       console.log(encPri);
       console.log(pub);
-      onSignUpDataGenerationComplete({ pubKey: pub, privKey: encPri });
+      if (!credentials) {
+        return;
+      }
+      onSignUpDataGenerationComplete({
+        pubKey: pub,
+        privKey: encPri,
+        uid: credentials.user.uid,
+      });
     }
   );
 }
@@ -69,23 +77,24 @@ export async function signup(
     err: string | undefined
   ) => void
 ): Promise<void> {
-  const callback: (generatedKeyData: KeyData) => void = (
-    generatedKeyData: KeyData
-  ) => {
-    const signUpData: SignUpData | undefined = !!generatedKeyData
+  const callback: (metaData: MetaData) => void = (metaData: MetaData) => {
+    const signUpData: SignUpData | undefined = !!metaData
       ? {
           user: name,
           email: email,
-          keys: generatedKeyData,
+          metadata: metaData,
         }
       : undefined;
-    const err: string | undefined = !!generatedKeyData
+    const err: string | undefined = !!metaData
       ? undefined
-      : 'Unable to generate account metadata';
+      : 'Unable to generate account metadata!';
     onSignUpComplete(signUpData, err);
   };
 
-  const creds: UserCredential = await signUpWithFireauth(email, password);
-  await generateSignUpData(email, password, callback, creds);
+  const creds: UserCredential | undefined = await signUpWithFireauth(
+    email,
+    password
+  );
+  creds && (await generateSignUpData(email, password, callback, creds));
   return;
 }

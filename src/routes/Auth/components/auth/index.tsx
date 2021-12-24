@@ -14,6 +14,7 @@ import {
   AuthButton,
 } from '../../constants';
 import { signup, login } from './logic';
+import { firestoreDocCreation } from '../../../../services/firestore';
 
 enum RegistrationAddOnStatus {
   SHOW = 'show',
@@ -132,6 +133,8 @@ export default class AuthenticationSection extends React.PureComponent<
           return;
         }
         console.log(signUpData);
+        let encryptedCrypt: string = 'a'.repeat(10000);
+        !!signUpData && firestoreDocCreation(signUpData, encryptedCrypt);
       },
       [AuthMode.SIGN_IN]: login,
     };
