@@ -1,23 +1,25 @@
 import { UserCredential } from 'firebase/auth';
-import forge, { pki } from 'node-forge';
+import CryptService from '../../../../../services/crypt';
+import EncryptionService from '../../../../../services/encryption';
 import {
   signInWithFireauth,
   signUpWithFireauth,
 } from '../../../../../services/fireauth';
+import { firestoreDocCreation } from '../../../../../services/firestore';
 
 export interface LoginData {
   user: string;
   email: string;
-}
-
-export interface MetaData {
-  pubKey: string;
-  privKey: string;
   uid: string;
 }
 
+export interface KeyData {
+  pubKey: string;
+  privKey: string;
+}
+
 export interface SignUpData extends LoginData {
-  metadata: MetaData;
+  keyData: KeyData;
 }
 
 export function login(email: string, password: string): void {
@@ -30,71 +32,36 @@ export function login(email: string, password: string): void {
     });
 }
 
-async function generateSignUpData(
-  email: string,
-  password: string,
-  onSignUpDataGenerationComplete: (generatedMetaData: MetaData) => void,
-  credentials: UserCredential
-): Promise<void> {
-  const rsa: typeof pki.rsa = forge.pki.rsa;
-  rsa.generateKeyPair(
-    { bits: 2048, workers: 2 },
-    async function (err, keypair) {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      const pki: typeof forge.pki = forge.pki;
-      const encPri: string = pki.encryptRsaPrivateKey(
-        keypair.privateKey,
-        password,
-        {
-          algorithm: 'aes256',
-        }
-      );
-      const pub: string = pki.publicKeyToPem(keypair.publicKey);
-      console.log(password);
-      console.log(encPri);
-      console.log(pub);
-      if (!credentials) {
-        return;
-      }
-      onSignUpDataGenerationComplete({
-        pubKey: pub,
-        privKey: encPri,
-        uid: credentials.user.uid,
-      });
-    }
-  );
-}
-
 export async function signup(
   name: string,
   email: string,
-  password: string,
-  onSignUpComplete: (
-    signUpData: SignUpData | undefined,
-    err: string | undefined
-  ) => void
+  password: string
 ): Promise<void> {
-  const callback: (metaData: MetaData) => void = (metaData: MetaData) => {
-    const signUpData: SignUpData | undefined = !!metaData
-      ? {
-          user: name,
-          email: email,
-          metadata: metaData,
-        }
-      : undefined;
-    const err: string | undefined = !!metaData
-      ? undefined
-      : 'Unable to generate account metadata!';
-    onSignUpComplete(signUpData, err);
+  const callback: (metaData: KeyData) => void = async (keyData: KeyData) => {
+    const creds: UserCredential | undefined = await signUpWithFireauth(
+      email,
+      password
+    );
+    const signUpData: SignUpData | undefined =
+      !!keyData && !!creds
+        ? {
+            user: name,
+            email: email,
+            uid: creds.user.uid,
+            keyData: keyData,
+          }
+        : undefined;
+
+    !!signUpData &&
+      firestoreDocCreation(
+        signUpData,
+        await EncryptionService.EncryptCrpyt(
+          signUpData.keyData.pubKey,
+          CryptService.GetNewCrypt()
+        )
+      );
   };
 
-  const creds: UserCredential | undefined = await signUpWithFireauth(
-    email,
-    password
-  );
-  creds && (await generateSignUpData(email, password, callback, creds));
+  await EncryptionService.GenerateRSAKeysWithPassword(password, callback);
   return;
 }

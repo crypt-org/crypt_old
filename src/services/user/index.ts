@@ -1,13 +1,7 @@
-export default interface User {
-  email: string;
-  name: string;
-  uid: string;
-  pub: string;
-  priv: string;
-}
+import User from './constants';
 
-export class Factory_UserState {
-  static ResetUserState(): User {
+export default class Factory_UserState {
+  static GetDefaultUser(): User {
     return {
       email: '',
       name: '',

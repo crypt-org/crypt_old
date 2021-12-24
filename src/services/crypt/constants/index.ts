@@ -55,15 +55,3 @@ export interface Notes extends Account {
 export default interface Crypt {
   accounts: Account[];
 }
-
-export class Factory_CryptState {
-  static ResetUserState(): Crypt {
-    return {
-      accounts: [],
-    };
-  }
-
-  static BuildUserState(cryptString: string): Crypt {
-    return JSON.parse(cryptString);
-  }
-}

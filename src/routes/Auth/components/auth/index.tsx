@@ -2,7 +2,6 @@ import React from 'react';
 import logo from '../../../../assets/images/title_black.png';
 import { AnimatePresence, motion } from 'framer-motion';
 import zxcvbn from 'zxcvbn';
-import { SignUpData } from './logic';
 import {
   AuthMode,
   Durations,
@@ -14,7 +13,6 @@ import {
   AuthButton,
 } from '../../constants';
 import { signup, login } from './logic';
-import { firestoreDocCreation } from '../../../../services/firestore';
 
 enum RegistrationAddOnStatus {
   SHOW = 'show',
@@ -121,23 +119,6 @@ export default class AuthenticationSection extends React.PureComponent<
 
   authenticate(e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
     e.preventDefault();
-    const callback_function: {
-      [key in AuthMode]: (...params: any) => any;
-    } = {
-      [AuthMode.SIGN_UP]: (
-        signUpData: SignUpData | undefined,
-        err: string | undefined
-      ) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        console.log(signUpData);
-        let encryptedCrypt: string = 'a'.repeat(10000);
-        !!signUpData && firestoreDocCreation(signUpData, encryptedCrypt);
-      },
-      [AuthMode.SIGN_IN]: login,
-    };
     const authentication_function: {
       [key in AuthMode]: (...params: any) => any;
     } = {
@@ -145,8 +126,7 @@ export default class AuthenticationSection extends React.PureComponent<
         signup(
           this.state.nameValue,
           this.state.emailValue,
-          this.state.passwordValue,
-          callback_function[AuthMode.SIGN_UP]
+          this.state.passwordValue
         ),
       [AuthMode.SIGN_IN]: () =>
         login(this.state.emailValue, this.state.passwordValue),
