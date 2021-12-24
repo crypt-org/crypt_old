@@ -1,6 +1,9 @@
 import { UserCredential } from 'firebase/auth';
 import forge, { pki } from 'node-forge';
-import { signInWithFireauth } from '../../../../../services/fireauth';
+import {
+  signInWithFireauth,
+  signUpWithFireauth,
+} from '../../../../../services/fireauth';
 
 export interface LoginData {
   user: string;
@@ -29,7 +32,8 @@ export function login(email: string, password: string): void {
 async function generateSignUpData(
   email: string,
   password: string,
-  onSignUpDataGenerationComplete: (generatedKeyData: KeyData) => void
+  onSignUpDataGenerationComplete: (generatedKeyData: KeyData) => void,
+  credentials: UserCredential
 ): Promise<void> {
   const rsa: typeof pki.rsa = forge.pki.rsa;
   rsa.generateKeyPair(
@@ -81,6 +85,7 @@ export async function signup(
     onSignUpComplete(signUpData, err);
   };
 
-  await generateSignUpData(email, password, callback);
+  const creds: UserCredential = await signUpWithFireauth(email, password);
+  await generateSignUpData(email, password, callback, creds);
   return;
 }
