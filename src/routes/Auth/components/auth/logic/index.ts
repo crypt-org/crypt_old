@@ -55,13 +55,13 @@ export async function signup(
     !!signUpData &&
       firestoreDocCreation(
         signUpData,
-        await EncryptionService.EncryptCrpyt(
+        EncryptionService.EncryptCrpyt(
           signUpData.keyData.pubKey,
           CryptService.GetNewCrypt()
         )
       );
   };
 
-  await EncryptionService.GenerateRSAKeysWithPassword(password, callback);
+  EncryptionService.GenerateRSAKeysWithPassword(password, callback);
   return;
 }

@@ -55,3 +55,5 @@ export interface Notes extends Account {
 export default interface Crypt {
   accounts: Account[];
 }
+
+export const CRYPT_SPLIT_SIZE_BYTES: number = 5000;

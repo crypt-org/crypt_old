@@ -4,10 +4,10 @@ import CryptService from '../crypt';
 import Crypt from '../crypt/constants';
 
 export default class EncryptionService {
-  static async GenerateRSAKeysWithPassword(
+  static GenerateRSAKeysWithPassword(
     password: string,
     onKeyGenerationComplete: (generatedKeyData: KeyData) => void
-  ): Promise<void> {
+  ): void {
     const rsa: typeof pki.rsa = forge.pki.rsa;
     rsa.generateKeyPair(
       { bits: 2048, workers: 2 },
@@ -25,9 +25,6 @@ export default class EncryptionService {
           }
         );
         const pub: string = pki.publicKeyToPem(keypair.publicKey);
-        console.log(password);
-        console.log(encPri);
-        console.log(pub);
         onKeyGenerationComplete({
           pubKey: pub,
           privKey: encPri,
@@ -36,7 +33,7 @@ export default class EncryptionService {
     );
   }
 
-  static async EncryptCrpyt(publicKey: string, crypt: Crypt) {
+  static EncryptCrpyt(publicKey: string, crypt: Crypt): string {
     const pki: typeof forge.pki = forge.pki;
     const pk: pki.rsa.PublicKey = pki.publicKeyFromPem(publicKey);
     return btoa(
