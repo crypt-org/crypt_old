@@ -1,6 +1,6 @@
-# passwd_locker
+# crypt
 
-A secure password management tool to ensure that you have strong and varying passwords across your different accounts.
+A multi-faceted security tool aimed at keeping your credentials and files safe, and secure.
 
 ## Links
 - [Yarn Bootstrap](./docs/yarn_bootstrap.md)
