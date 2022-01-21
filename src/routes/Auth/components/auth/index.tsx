@@ -14,8 +14,15 @@ import {
 } from '../../constants';
 import { signup, login } from './logic';
 import { RootState } from '../../../../services/redux/Redux';
-import { useSelector } from 'react-redux';
 import { Redirect } from 'react-router-dom';
+import {
+  useAppDispatch,
+  useAppSelector,
+} from '../../../../services/redux/hooks';
+import { loginUser } from '../../../../services/redux/config/User';
+import UserModel from '../../../../models/user';
+import CryptModel from '../../../../models/crypt';
+import { updateCrypt } from '../../../../services/redux/config/Crypt';
 
 enum RegistrationAddOnStatus {
   SHOW = 'show',
@@ -205,16 +212,17 @@ const AuthenticationSection: React.FC<AuthSectionProps> = (
     passwordValue: '',
     registrationAddOnStatus: RegistrationAddOnStatus.HIDE,
     secondaryInputType: InputTypes.PASSWORD,
-    isAuthenticationSuccess: useSelector(
+    isAuthenticationSuccess: useAppSelector(
       (state: RootState) =>
         !!state.user.email &&
         !!state.user.name &&
-        !!state.user.priv &&
         !!state.user.pub &&
         !!state.user.pub &&
         !!state.user.uid
     ),
   });
+
+  const state_dispatcher = useAppDispatch();
 
   useEffect(() => {
     props.setModeChangeCallback(() => {
@@ -241,18 +249,44 @@ const AuthenticationSection: React.FC<AuthSectionProps> = (
   ): void {
     e.preventDefault();
     const post_authentication_state_callbacks: {
-      [key in AuthMode]: (...params: any) => any;
+      [key in AuthMode]: (
+        authenticatedUser: UserModel,
+        cryptModel: CryptModel
+      ) => any;
     } = {
-      [AuthMode.SIGN_UP]: () => true,
-      [AuthMode.SIGN_IN]: (isLoginSuccess: boolean) =>
-        isLoginSuccess &&
-        setState({ ...state, isAuthenticationSuccess: isLoginSuccess }),
+      [AuthMode.SIGN_UP]: (
+        authenticatedUser: UserModel,
+        cryptModel: CryptModel
+      ) => {
+        if (!authenticatedUser || !cryptModel) {
+          return;
+        }
+        state_dispatcher(loginUser(authenticatedUser));
+        state_dispatcher(updateCrypt(cryptModel));
+        setState({ ...state, isAuthenticationSuccess: true });
+      },
+      [AuthMode.SIGN_IN]: (
+        authenticatedUser: UserModel,
+        cryptModel: CryptModel
+      ) => {
+        if (!authenticatedUser || !cryptModel) {
+          return;
+        }
+        state_dispatcher(loginUser(authenticatedUser));
+        state_dispatcher(updateCrypt(cryptModel));
+        setState({ ...state, isAuthenticationSuccess: true });
+      },
     };
     const authentication_function: {
       [key in AuthMode]: (...params: any) => any;
     } = {
       [AuthMode.SIGN_UP]: () =>
-        signup(state.nameValue, state.emailValue, state.passwordValue),
+        signup(
+          state.nameValue,
+          state.emailValue,
+          state.passwordValue,
+          post_authentication_state_callbacks[AuthMode.SIGN_UP]
+        ),
       [AuthMode.SIGN_IN]: () =>
         login(
           state.emailValue,
@@ -264,15 +298,6 @@ const AuthenticationSection: React.FC<AuthSectionProps> = (
     authentication_function[props.authMode]();
   }
 
-  const auth_section_variants =
-    AuthSectionVariantFactory.generateAuthSectionVariants(props.isMobileView);
-
-  const registration_addon_variants: { [key: string]: {} } =
-    AuthSectionVariantFactory.generateRegistrationAddOnVariants();
-
-  const submit_button_variants: { [key: string]: {} } =
-    AuthSectionVariantFactory.generateSubmitButtonVariants();
-
   return state.isAuthenticationSuccess ? (
     <Redirect to='/home' />
   ) : (
@@ -283,7 +308,9 @@ const AuthenticationSection: React.FC<AuthSectionProps> = (
           ? AuthMode.SIGN_IN
           : AuthMode.SIGN_UP
       }
-      variants={auth_section_variants}
+      variants={AuthSectionVariantFactory.generateAuthSectionVariants(
+        props.isMobileView
+      )}
       initial={AuthMode.SIGN_IN}
       className='signInSpaceDiv'
     >
@@ -300,7 +327,7 @@ const AuthenticationSection: React.FC<AuthSectionProps> = (
               name={InputNames.NAME}
               initial={RegistrationAddOnStatus.HIDE}
               animate={state.registrationAddOnStatus}
-              variants={registration_addon_variants}
+              variants={AuthSectionVariantFactory.generateRegistrationAddOnVariants()}
               exit={RegistrationAddOnStatus.HIDE}
               type='text'
               placeholder={InputNames.NAME}
@@ -390,7 +417,7 @@ const AuthenticationSection: React.FC<AuthSectionProps> = (
           transition={{
             duration: Durations.FAST_MS / 1000,
           }}
-          variants={submit_button_variants}
+          variants={AuthSectionVariantFactory.generateSubmitButtonVariants()}
           whileHover={CommonTransitionVariants.HOVER}
           whileTap={CommonTransitionVariants.TAP}
           onClick={authenticate}

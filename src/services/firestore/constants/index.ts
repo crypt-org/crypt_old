@@ -2,17 +2,35 @@ export const USER_DB_VERSION: string = 'v0.1';
 export const CRYPT_DB_VERSION: string = 'v0.1';
 export const RESTRICTED_DB_VERSION: string = 'v0.1';
 
-export const USER_COLLECTION_NAME: string = 'users';
-export const CRYPTS_COLLECTION_NAME: string = 'crypts';
-export const CRYPTS_CRYPT_COLLECTION_NAME: string = 'crypt';
-export const RESTRICTED_COLLECTION_NAME: string = 'restricted';
+export enum FIRESTORE_COLLECTION_NAMES {
+  USER = 'users',
+  CRYPTS = 'crypts',
+  CRYPTS_CRYPT = 'crypt',
+  RESTRICTED = 'restricted',
+  RESTRICTED_PRIVATE = 'private',
+}
 
-export const DOCUMENT_PRIK_KEY: string = 'priv';
-export const DOCUMENT_PUBK_KEY: string = 'pub';
-export const DOCUMENT_UID_KEY: string = 'uid';
-export const DOCUMENT_DBVERSION_KEY: string = 'db';
-export const DOCUMENT_CRYPTSPLIT_KEY: string = 'data';
-export const DOCUMENT_EMAIL_KEY: string = 'email';
-export const DOCUMENT_NAME_KEY: string = 'name';
-export const DOCUMENT_FRIENDS_KEY: string = 'friends';
-export const DOCUMENT_SHAREDCREDS_KEY: string = 'shared';
+export enum FIRESTORE_DOCUMENT_NAMES {
+  RESTRICTED_PRIVATE_KEY = 'key',
+}
+
+export enum FIRESTORE_DOCUMENT_PROPERTIES {
+  PRIVATE_KEY = 'priv',
+  PUBLIC_KEY = 'pub',
+  UID = 'uid',
+  DB_VERSION = 'db',
+  CRYPTSPLIT = 'data',
+  EMAIL = 'email',
+  NAME = 'name',
+  FRIENDS = 'friends',
+  SHAREDCREDS = 'shared',
+}
+
+export interface Firestore_UserModel {
+  [FIRESTORE_DOCUMENT_PROPERTIES.DB_VERSION]: string;
+  [FIRESTORE_DOCUMENT_PROPERTIES.EMAIL]: string;
+  [FIRESTORE_DOCUMENT_PROPERTIES.FRIENDS]: string[];
+  [FIRESTORE_DOCUMENT_PROPERTIES.NAME]: string;
+  [FIRESTORE_DOCUMENT_PROPERTIES.PUBLIC_KEY]: string;
+  [FIRESTORE_DOCUMENT_PROPERTIES.UID]: string;
+}

@@ -1,5 +1,4 @@
 import { FirestoreDB } from '../firebase';
-import { SignUpData } from '../../routes/Auth/components/auth/logic';
 import {
   doc,
   setDoc,
@@ -7,29 +6,28 @@ import {
   DocumentReference,
   DocumentData,
   collection,
+  query,
+  where,
+  Query,
+  getDocs,
+  QuerySnapshot,
+  getDoc,
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import {
   USER_DB_VERSION,
   CRYPT_DB_VERSION,
-  USER_COLLECTION_NAME,
-  CRYPTS_COLLECTION_NAME,
-  CRYPTS_CRYPT_COLLECTION_NAME,
-  RESTRICTED_COLLECTION_NAME,
-  DOCUMENT_PRIK_KEY,
-  DOCUMENT_DBVERSION_KEY,
-  DOCUMENT_NAME_KEY,
-  DOCUMENT_EMAIL_KEY,
-  DOCUMENT_PUBK_KEY,
-  DOCUMENT_FRIENDS_KEY,
-  DOCUMENT_CRYPTSPLIT_KEY,
-  DOCUMENT_UID_KEY,
   RESTRICTED_DB_VERSION,
-  DOCUMENT_SHAREDCREDS_KEY,
+  Firestore_UserModel,
+  FIRESTORE_DOCUMENT_PROPERTIES,
+  FIRESTORE_COLLECTION_NAMES,
+  FIRESTORE_DOCUMENT_NAMES,
 } from './constants';
 import CryptService from '../crypt';
+import { KeyData, LoginData } from '../../routes/Auth/components/auth/logic';
 
 export async function firestoreDocCreation(
-  signUpData: SignUpData,
+  signUpData: LoginData & KeyData,
   encryptedCrypt: string
 ): Promise<void> {
   await createNewUserDocument(signUpData);
@@ -38,38 +36,55 @@ export async function firestoreDocCreation(
 }
 
 async function createNewRestrictedDocument(
-  signUpData: SignUpData
+  signUpData: LoginData & KeyData
 ): Promise<DocumentReference<DocumentData>> {
-  return addDoc(collection(FirestoreDB, RESTRICTED_COLLECTION_NAME), {
-    [DOCUMENT_DBVERSION_KEY]: RESTRICTED_DB_VERSION,
-    [DOCUMENT_UID_KEY]: signUpData.uid,
-    [DOCUMENT_PRIK_KEY]: signUpData.keyData.privKey,
-  });
+  const restricted_ref: DocumentReference<DocumentData> = await addDoc(
+    collection(FirestoreDB, FIRESTORE_COLLECTION_NAMES.RESTRICTED),
+    {
+      [FIRESTORE_DOCUMENT_PROPERTIES.DB_VERSION]: RESTRICTED_DB_VERSION,
+      [FIRESTORE_DOCUMENT_PROPERTIES.UID]: signUpData.uid,
+    }
+  );
+  await setDoc(
+    doc(
+      restricted_ref,
+      FIRESTORE_COLLECTION_NAMES.RESTRICTED_PRIVATE,
+      FIRESTORE_DOCUMENT_NAMES.RESTRICTED_PRIVATE_KEY
+    ),
+    {
+      [FIRESTORE_DOCUMENT_PROPERTIES.PRIVATE_KEY]: signUpData.priv,
+    }
+  );
+  return restricted_ref;
 }
 
 async function createNewUserDocument(
-  signUpData: SignUpData
+  signUpData: LoginData & KeyData
 ): Promise<DocumentReference<DocumentData>> {
-  return addDoc(collection(FirestoreDB, USER_COLLECTION_NAME), {
-    [DOCUMENT_DBVERSION_KEY]: USER_DB_VERSION,
-    [DOCUMENT_UID_KEY]: signUpData.uid,
-    [DOCUMENT_NAME_KEY]: signUpData.user,
-    [DOCUMENT_EMAIL_KEY]: signUpData.email,
-    [DOCUMENT_PUBK_KEY]: signUpData.keyData.pubKey,
-    [DOCUMENT_FRIENDS_KEY]: [],
-  });
+  const new_user_data: Firestore_UserModel = {
+    [FIRESTORE_DOCUMENT_PROPERTIES.DB_VERSION]: USER_DB_VERSION,
+    [FIRESTORE_DOCUMENT_PROPERTIES.UID]: signUpData.uid,
+    [FIRESTORE_DOCUMENT_PROPERTIES.NAME]: signUpData.name,
+    [FIRESTORE_DOCUMENT_PROPERTIES.EMAIL]: signUpData.email,
+    [FIRESTORE_DOCUMENT_PROPERTIES.PUBLIC_KEY]: signUpData.pub,
+    [FIRESTORE_DOCUMENT_PROPERTIES.FRIENDS]: [],
+  };
+  return addDoc(
+    collection(FirestoreDB, FIRESTORE_COLLECTION_NAMES.USER),
+    new_user_data
+  );
 }
 
 async function createNewCryptDocument(
-  signUpData: SignUpData,
+  signUpData: LoginData & KeyData,
   encryptedCrypt: string
 ): Promise<DocumentReference<DocumentData>> {
   const cryptRef: DocumentReference<DocumentData> = await addDoc(
-    collection(FirestoreDB, CRYPTS_COLLECTION_NAME),
+    collection(FirestoreDB, FIRESTORE_COLLECTION_NAMES.CRYPTS),
     {
-      [DOCUMENT_DBVERSION_KEY]: CRYPT_DB_VERSION,
-      [DOCUMENT_UID_KEY]: signUpData.uid,
-      [DOCUMENT_SHAREDCREDS_KEY]: [],
+      [FIRESTORE_DOCUMENT_PROPERTIES.DB_VERSION]: CRYPT_DB_VERSION,
+      [FIRESTORE_DOCUMENT_PROPERTIES.UID]: signUpData.uid,
+      [FIRESTORE_DOCUMENT_PROPERTIES.SHAREDCREDS]: [],
     }
   );
 
@@ -79,14 +94,128 @@ async function createNewCryptDocument(
   encryptedArray.forEach((value: string, index: number) => {
     let accountsRef: DocumentReference<DocumentData> = doc(
       cryptRef,
-      CRYPTS_CRYPT_COLLECTION_NAME,
+      FIRESTORE_COLLECTION_NAMES.CRYPTS_CRYPT,
       index.toString()
     );
 
     setDoc(accountsRef, {
-      [DOCUMENT_CRYPTSPLIT_KEY]: value,
+      [FIRESTORE_DOCUMENT_PROPERTIES.CRYPTSPLIT]: value,
     });
   });
 
   return cryptRef;
+}
+
+export async function getRestrictedDocument(uid: string) {
+  const res_doc_query: Query<DocumentData> = query(
+    collection(FirestoreDB, FIRESTORE_COLLECTION_NAMES.RESTRICTED),
+    where(FIRESTORE_DOCUMENT_PROPERTIES.UID, '==', uid)
+  );
+
+  const query_snapshot: QuerySnapshot<DocumentData> = await getDocs(
+    res_doc_query
+  );
+  if (query_snapshot.size === 0 || query_snapshot.size > 1) {
+    console.error('Restricted Document Fetch Failed.');
+    return undefined;
+  }
+  return query_snapshot.docs[0].ref;
+}
+
+export async function getPrivateKeyDocumentData(uid: string) {
+  const restricted_ref: DocumentReference<DocumentData> | undefined =
+    await getRestrictedDocument(uid);
+  if (!restricted_ref) {
+    console.error('Private Document Fetch Failed.');
+    return undefined;
+  }
+
+  const pk_ref: DocumentData | undefined = (
+    await getDoc(
+      doc(
+        restricted_ref,
+        FIRESTORE_COLLECTION_NAMES.RESTRICTED_PRIVATE,
+        FIRESTORE_DOCUMENT_NAMES.RESTRICTED_PRIVATE_KEY
+      )
+    )
+  ).data();
+  return pk_ref;
+}
+
+export async function getUserData(
+  uid: string
+): Promise<Firestore_UserModel | undefined> {
+  const user_data_query: Query<DocumentData> = query(
+    collection(FirestoreDB, FIRESTORE_COLLECTION_NAMES.USER),
+    where(FIRESTORE_DOCUMENT_PROPERTIES.UID, '==', uid)
+  );
+  const query_snapshot: QuerySnapshot<DocumentData> = await getDocs(
+    user_data_query
+  );
+  if (query_snapshot.size === 0 || query_snapshot.size > 1) {
+    console.error('User Document Fetch Failed.');
+    return undefined;
+  }
+  return query_snapshot.docs[0].data() as Firestore_UserModel;
+}
+
+export async function getEncryptedPrivateKey(uid: string) {
+  const pk_doc_data: DocumentData | undefined = await getPrivateKeyDocumentData(
+    uid
+  );
+  return pk_doc_data
+    ? pk_doc_data[FIRESTORE_DOCUMENT_PROPERTIES.PRIVATE_KEY]
+    : pk_doc_data;
+}
+
+export async function getCryptDocument(
+  uid: string
+): Promise<DocumentReference<DocumentData> | undefined> {
+  const crypt_doc_query: Query<DocumentData> = query(
+    collection(FirestoreDB, FIRESTORE_COLLECTION_NAMES.CRYPTS),
+    where(FIRESTORE_DOCUMENT_PROPERTIES.UID, '==', uid)
+  );
+  const query_snapshot: QuerySnapshot<DocumentData> = await getDocs(
+    crypt_doc_query
+  );
+  if (query_snapshot.size === 0) {
+    return undefined;
+  }
+  return query_snapshot.docs[0].ref;
+}
+
+export async function getEncryptedCryptDocuments(
+  uid: string
+): Promise<QueryDocumentSnapshot<DocumentData>[] | undefined> {
+  const crypt_parent_doc_ref: DocumentReference<DocumentData> | undefined =
+    await getCryptDocument(uid);
+  if (!crypt_parent_doc_ref) {
+    return undefined;
+  }
+
+  const crypt_docs_coll: QuerySnapshot<DocumentData> = await getDocs(
+    collection(
+      FirestoreDB,
+      crypt_parent_doc_ref.path,
+      FIRESTORE_COLLECTION_NAMES.CRYPTS_CRYPT
+    )
+  );
+  return crypt_docs_coll.docs;
+}
+
+export async function getEncryptedCrypt(
+  uid: string
+): Promise<string | undefined> {
+  const crypt_docs: QueryDocumentSnapshot<DocumentData>[] | undefined =
+    await getEncryptedCryptDocuments(uid);
+  if (!crypt_docs) {
+    return undefined;
+  }
+  const split_crypts: string[] = [];
+  crypt_docs.forEach((snapshot: QueryDocumentSnapshot<DocumentData>) => {
+    split_crypts.push(
+      snapshot.data()[FIRESTORE_DOCUMENT_PROPERTIES.CRYPTSPLIT]
+    );
+  });
+  return split_crypts.join();
 }

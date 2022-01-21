@@ -31,7 +31,7 @@ export enum AuthMode {
 export enum Durations {
   MODE_CHANGE_MS = 1200,
   FAST_MS = 100,
-  MEDIUM_MS = 550,
+  MEDIUM_MS = 560,
 }
 
 export enum CommonTransitionVariants {

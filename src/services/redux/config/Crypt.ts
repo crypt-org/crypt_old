@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WritableDraft } from 'immer/dist/internal';
-import Crypt from '../../crypt/constants';
+import CryptModel from '../../../models/crypt';
 import CryptService from '../../crypt';
 
-const initialState: Crypt = CryptService.GetNewCrypt();
+const initialState: CryptModel = CryptService.GetNewCrypt();
 
 // Redux Slice
 export const cryptReduxSlice = createSlice({
@@ -11,21 +11,21 @@ export const cryptReduxSlice = createSlice({
   initialState,
   reducers: {
     resetCrypt: (
-      state: WritableDraft<Crypt>,
-      action?: PayloadAction<Crypt>
+      state: WritableDraft<CryptModel>,
+      action?: PayloadAction<CryptModel>
     ) => {
-      state = initialState;
+      state.accounts = initialState.accounts;
     },
-    initializeCrypt: (
-      state: WritableDraft<Crypt>,
-      action?: PayloadAction<Crypt>
+    updateCrypt: (
+      state: WritableDraft<CryptModel>,
+      action?: PayloadAction<CryptModel>
     ) => {
-      // Do nothing for now
+      state.accounts = initialState.accounts;
     },
   },
 });
 
 // Action Types
-export const { resetCrypt } = cryptReduxSlice.actions;
+export const { resetCrypt, updateCrypt } = cryptReduxSlice.actions;
 
 export default cryptReduxSlice.reducer;

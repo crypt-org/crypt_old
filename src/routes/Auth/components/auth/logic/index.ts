@@ -1,71 +1,123 @@
 import { UserCredential } from 'firebase/auth';
+import CryptModel from '../../../../../models/crypt';
+import UserModel from '../../../../../models/user';
 import CryptService from '../../../../../services/crypt';
 import EncryptionService from '../../../../../services/encryption';
 import {
   signInWithFireauth,
   signUpWithFireauth,
 } from '../../../../../services/fireauth';
-import { firestoreDocCreation } from '../../../../../services/firestore';
+import {
+  firestoreDocCreation,
+  getEncryptedCrypt,
+  getEncryptedPrivateKey,
+  getUserData,
+} from '../../../../../services/firestore';
+import { Firestore_UserModel } from '../../../../../services/firestore/constants';
+import Factory_User from '../../../../../services/user';
 
 export interface LoginData {
-  user: string;
+  name: string;
   email: string;
   uid: string;
 }
 
 export interface KeyData {
-  pubKey: string;
-  privKey: string;
-}
-
-export interface SignUpData extends LoginData {
-  keyData: KeyData;
+  pub: string;
+  priv: string;
 }
 
 export async function login(
   email: string,
   password: string,
-  onLoginComplete: (isLoginSuccess: boolean) => void
+  onLoginComplete: (
+    authenticatedUser: UserModel,
+    cryptModel: CryptModel
+  ) => void
 ): Promise<void> {
-  signInWithFireauth(email, password)
-    .then((usercreds: UserCredential) => {
-      console.log(usercreds);
-      onLoginComplete(true);
-    })
-    .catch((error: { message: string }) => {
-      console.log(error.message);
-      onLoginComplete(false);
-    });
+  try {
+    const userCreds: UserCredential = await signInWithFireauth(email, password);
+    const encryptedPrivateKey: string | undefined =
+      await getEncryptedPrivateKey(userCreds.user.uid);
+    const encryptedCrypt: string | undefined = await getEncryptedCrypt(
+      userCreds.user.uid
+    );
+    const userData: Firestore_UserModel | undefined = await getUserData(
+      userCreds.user.uid
+    );
+
+    if (!encryptedPrivateKey || !encryptedCrypt || !userData) {
+      return;
+    }
+    const authenticatedUserModel: UserModel = Factory_User.BuildUserModel(
+      userData.email,
+      userData.name,
+      userData.uid,
+      userData.pub
+    );
+    const decryptedCrypt: CryptModel = EncryptionService.DecryptCrypt(
+      EncryptionService.DecryptRSAPrivateKey(password, encryptedPrivateKey),
+      encryptedCrypt
+    );
+
+    onLoginComplete(authenticatedUserModel, decryptedCrypt);
+  } catch (e) {
+    console.error(e);
+    return; //$ Login does not complete on any error.
+  }
 }
 
 export async function signup(
   name: string,
   email: string,
-  password: string
+  password: string,
+  onSignUpComplete: (
+    authenticatedUser: UserModel,
+    cryptModel: CryptModel
+  ) => void
 ): Promise<void> {
   const callback: (metaData: KeyData) => void = async (keyData: KeyData) => {
-    const creds: UserCredential | undefined = await signUpWithFireauth(
-      email,
-      password
-    );
-    const signUpData: SignUpData | undefined =
-      !!keyData && !!creds
-        ? {
-            user: name,
-            email: email,
-            uid: creds.user.uid,
-            keyData: keyData,
-          }
-        : undefined;
-
-    !!signUpData &&
-      firestoreDocCreation(
-        signUpData,
-        EncryptionService.EncryptCrpyt(
-          signUpData.keyData.pubKey,
-          CryptService.GetNewCrypt()
-        )
+    try {
+      const creds: UserCredential | undefined = await signUpWithFireauth(
+        email,
+        password
       );
+
+      const userData: (LoginData & KeyData) | undefined =
+        !!keyData && !!creds
+          ? {
+              name: name,
+              email: email,
+              uid: creds.user.uid,
+              ...keyData,
+            }
+          : undefined;
+
+      !!userData &&
+        !!creds &&
+        firestoreDocCreation(
+          userData,
+          EncryptionService.EncryptCrpyt(
+            userData.pub,
+            CryptService.GetNewCrypt()
+          )
+        );
+
+      !!userData &&
+        !!creds &&
+        onSignUpComplete(
+          Factory_User.BuildUserModel(
+            userData.email,
+            userData.name,
+            userData.uid,
+            userData.pub
+          ),
+          CryptService.GetNewCrypt()
+        );
+    } catch (e) {
+      console.error(e);
+      return; //$ Sign Up does not complete on any error.
+    }
   };
 
   EncryptionService.GenerateRSAKeysWithPassword(password, callback);
