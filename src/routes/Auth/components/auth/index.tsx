@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from '../../../../assets/images/title_black.png';
 import { AnimatePresence, motion } from 'framer-motion';
 import zxcvbn from 'zxcvbn';
@@ -13,6 +13,9 @@ import {
   AuthButton,
 } from '../../constants';
 import { signup, login } from './logic';
+import { RootState } from '../../../../services/redux/Redux';
+import { useSelector } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 
 enum RegistrationAddOnStatus {
   SHOW = 'show',
@@ -48,292 +51,357 @@ export type AuthSectionState = {
   nameValue: string;
   authTitle: string;
   authButtonText: string;
+  isAuthenticationSuccess: boolean;
 };
 
-export default class AuthenticationSection extends React.PureComponent<
-  AuthSectionProps,
-  AuthSectionState
-> {
-  constructor(props: AuthSectionProps) {
-    super(props);
-    this.state = {
-      authTitle: AuthTitle[AuthMode.SIGN_IN],
-      authButtonText: AuthButton[AuthMode.SIGN_IN],
-      emailValue: '',
-      passwordStrengthWidth: 0,
-      passwordVisibility: false,
-      nameValue: '',
-      passwordValue: '',
-      registrationAddOnStatus: RegistrationAddOnStatus.HIDE,
-      secondaryInputType: InputTypes.PASSWORD,
-    };
+const AuthSectionHelpers: {
+  getSignUpPasswdStrengthIndicator: (newPass: string) => number;
+  evaluatePasswordBarColour: (passwdStrengthPercent: number) => string;
+  fetchPasswordInputColour: (
+    authMode: AuthMode,
+    passwdStrengthPercent: number
+  ) => string;
+} = {
+  getSignUpPasswdStrengthIndicator: (newPass: string) => {
+    const strengthPercent: number =
+      newPass === '' ? 0 : (zxcvbn(newPass).score / 4) * 90 + 10; // Scale output between 10 & 100 if newPass is not empty
+    return strengthPercent;
+  },
+  evaluatePasswordBarColour: (passwdStrengthPercent: number) => {
+    if (passwdStrengthPercent < 50) {
+      return PasswordStrengthBarColours.WEAK;
+    } else if (passwdStrengthPercent < 99) {
+      return PasswordStrengthBarColours.MEDIUM;
+    } else {
+      return PasswordStrengthBarColours.STRONG;
+    }
+  },
+  fetchPasswordInputColour: (
+    authMode: AuthMode,
+    passwdStrengthPercent: number
+  ) => {
+    if (authMode === AuthMode.SIGN_IN || passwdStrengthPercent === 0) {
+      return PasswordInputColours.DEFAULT;
+    } else if (passwdStrengthPercent < 50) {
+      return PasswordInputColours.WEAK;
+    } else if (passwdStrengthPercent < 99) {
+      return PasswordInputColours.MEDIUM;
+    } else {
+      return PasswordInputColours.STRONG;
+    }
+  },
+};
 
-    this.authenticate = this.authenticate.bind(this);
-  }
+const AuthSectionVariantFactory: {
+  generateAuthSectionVariants: (isMobileView: boolean) => {
+    [key in AuthMode]: any;
+  };
+  generateRegistrationAddOnVariants: () => {
+    [key in RegistrationAddOnStatus]: any;
+  };
+  generateSubmitButtonVariants: () => {
+    [key in CommonTransitionVariants & TransitionState]: any;
+  };
+} = {
+  generateAuthSectionVariants: (isMobileView: boolean) => ({
+    [AuthMode.SIGN_IN]: isMobileView
+      ? {
+          right: 0,
+          transition: {
+            duration: Durations.MODE_CHANGE_MS / 1000,
+            type: 'tween',
+            ease: 'easeInOut',
+          },
+        }
+      : {
+          right: 0,
+          transition: {
+            duration: Durations.MODE_CHANGE_MS / 1000,
+            type: 'tween',
+            ease: 'easeInOut',
+          },
+        },
+    [AuthMode.SIGN_UP]: isMobileView
+      ? {
+          right: 0,
+          transition: {
+            duration: Durations.MODE_CHANGE_MS / 1000,
+            type: 'tween',
+            ease: 'easeInOut',
+          },
+        }
+      : {
+          right: '50%',
+          transition: {
+            duration: Durations.MODE_CHANGE_MS / 1000,
+            type: 'tween',
+            ease: 'easeInOut',
+          },
+        },
+  }),
+  generateRegistrationAddOnVariants: () => ({
+    [RegistrationAddOnStatus.SHOW]: {
+      height: '50px',
+      paddingLeft: '30px',
+      paddingRight: '30px',
+      opacity: 1,
+      transition: {
+        duration: Durations.MEDIUM_MS / 1000,
+      },
+    },
+    [RegistrationAddOnStatus.HIDE]: {
+      lineHeight: '0',
+      padding: '0',
+      border: '0',
+      height: '0',
+      margin: '0',
+      opacity: 0,
+      transition: {
+        duration: Durations.MEDIUM_MS / 1000,
+      },
+    },
+  }),
+  generateSubmitButtonVariants: () => ({
+    [TransitionState.FIXED]: {
+      opacity: 1,
+      transition: {
+        duration: Durations.FAST_MS / 1000,
+      },
+      backgroundColor: 'rgba(255,255,255,1)',
+    },
+    [TransitionState.TRANSITIONING]: {
+      color: ['#1588CC', 'rgba(255,255,255,0)', '#1588CC'],
+      transition: {
+        duration: Durations.MODE_CHANGE_MS / 1000,
+      },
+    },
+    [CommonTransitionVariants.HOVER]: {
+      scale: 1.1,
+      color: 'rgba(255,255,255,1)',
+      backgroundColor: '#1588CC',
+      transition: {
+        duration: Durations.FAST_MS / 1000,
+      },
+    },
+    [CommonTransitionVariants.TAP]: {
+      scale: 0.9,
+      transition: {
+        duration: Durations.FAST_MS / 1000,
+      },
+    },
+  }),
+};
 
-  componentDidMount() {
-    // Setup Mode Change Callback
-    this.props.setModeChangeCallback(() => {
-      this.setState({
-        authTitle: AuthTitle[this.props.authMode],
-        authButtonText: AuthButton[this.props.authMode],
+const AuthenticationSection: React.FC<AuthSectionProps> = (
+  props: AuthSectionProps
+) => {
+  const [state, setState] = useState({
+    authTitle: AuthTitle[AuthMode.SIGN_IN],
+    authButtonText: AuthButton[AuthMode.SIGN_IN],
+    emailValue: '',
+    passwordStrengthWidth: 0,
+    passwordVisibility: false,
+    nameValue: '',
+    passwordValue: '',
+    registrationAddOnStatus: RegistrationAddOnStatus.HIDE,
+    secondaryInputType: InputTypes.PASSWORD,
+    isAuthenticationSuccess: useSelector(
+      (state: RootState) =>
+        !!state.user.email &&
+        !!state.user.name &&
+        !!state.user.priv &&
+        !!state.user.pub &&
+        !!state.user.pub &&
+        !!state.user.uid
+    ),
+  });
+
+  useEffect(() => {
+    props.setModeChangeCallback(() => {
+      setState({
+        ...state,
+        authTitle: AuthTitle[props.authMode],
+        authButtonText: AuthButton[props.authMode],
         registrationAddOnStatus:
-          this.props.authMode === AuthMode.SIGN_UP
+          props.authMode === AuthMode.SIGN_UP
             ? RegistrationAddOnStatus.SHOW
             : RegistrationAddOnStatus.HIDE,
         nameValue: '',
       });
     });
-  }
 
-  evaluateSignUpPassword(newPass: string): void {
-    const strengthPercen: number =
-      newPass === '' ? 0 : (zxcvbn(newPass).score / 4) * 90 + 10; // Scale output between 10 & 100 if newPass is not empty
-    this.setState({ passwordStrengthWidth: strengthPercen });
-  }
+    // * We only want this function to re-run on changes to {props.authMode}
+    // * Without es-lint-disable-next-line, eslint will throw a warning that
+    // * {props} and {state} were not included in the dependencies.
+    // eslint-disable-next-line
+  }, [props.authMode]);
 
-  fetchPasswordBarColour(): string {
-    if (this.state.passwordStrengthWidth < 50) {
-      return PasswordStrengthBarColours.WEAK;
-    } else if (this.state.passwordStrengthWidth < 99) {
-      return PasswordStrengthBarColours.MEDIUM;
-    } else {
-      return PasswordStrengthBarColours.STRONG;
-    }
-  }
-
-  fetchPasswordInputColour(): string {
-    if (
-      this.props.authMode === AuthMode.SIGN_IN ||
-      this.state.passwordStrengthWidth === 0
-    ) {
-      return PasswordInputColours.DEFAULT;
-    } else if (this.state.passwordStrengthWidth < 50) {
-      return PasswordInputColours.WEAK;
-    } else if (this.state.passwordStrengthWidth < 99) {
-      return PasswordInputColours.MEDIUM;
-    } else {
-      return PasswordInputColours.STRONG;
-    }
-  }
-
-  authenticate(e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+  function authenticate(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ): void {
     e.preventDefault();
+    const post_authentication_state_callbacks: {
+      [key in AuthMode]: (...params: any) => any;
+    } = {
+      [AuthMode.SIGN_UP]: () => true,
+      [AuthMode.SIGN_IN]: (isLoginSuccess: boolean) =>
+        isLoginSuccess &&
+        setState({ ...state, isAuthenticationSuccess: isLoginSuccess }),
+    };
     const authentication_function: {
       [key in AuthMode]: (...params: any) => any;
     } = {
       [AuthMode.SIGN_UP]: () =>
-        signup(
-          this.state.nameValue,
-          this.state.emailValue,
-          this.state.passwordValue
-        ),
+        signup(state.nameValue, state.emailValue, state.passwordValue),
       [AuthMode.SIGN_IN]: () =>
-        login(this.state.emailValue, this.state.passwordValue),
+        login(
+          state.emailValue,
+          state.passwordValue,
+          post_authentication_state_callbacks[AuthMode.SIGN_IN]
+        ),
     };
 
-    authentication_function[this.props.authMode]();
+    authentication_function[props.authMode]();
   }
 
-  render() {
-    const auth_section_variants = {
-      [AuthMode.SIGN_IN]: this.props.isMobileView
-        ? {
-            right: 0,
-            transition: {
-              duration: Durations.MODE_CHANGE_MS / 1000,
-              type: 'tween',
-              ease: 'easeInOut',
-            },
+  const auth_section_variants =
+    AuthSectionVariantFactory.generateAuthSectionVariants(props.isMobileView);
+
+  const registration_addon_variants: { [key: string]: {} } =
+    AuthSectionVariantFactory.generateRegistrationAddOnVariants();
+
+  const submit_button_variants: { [key: string]: {} } =
+    AuthSectionVariantFactory.generateSubmitButtonVariants();
+
+  return state.isAuthenticationSuccess ? (
+    <Redirect to='/home' />
+  ) : (
+    <motion.section
+      layoutId='authLayout'
+      animate={
+        props.authMode === AuthMode.SIGN_IN
+          ? AuthMode.SIGN_IN
+          : AuthMode.SIGN_UP
+      }
+      variants={auth_section_variants}
+      initial={AuthMode.SIGN_IN}
+      className='signInSpaceDiv'
+    >
+      <motion.div className='signInTitleDiv' layoutId='authLayout'>
+        <motion.p className='signInTitleCTA'>{state.authTitle}</motion.p>
+        <img src={logo} alt='Crypt Logo' className='authTitleLogo' />
+      </motion.div>
+      <form className='signInForm'>
+        <AnimatePresence>
+          {state.registrationAddOnStatus === RegistrationAddOnStatus.SHOW && (
+            <motion.input
+              layoutId='authLayout'
+              key='name_input'
+              name={InputNames.NAME}
+              initial={RegistrationAddOnStatus.HIDE}
+              animate={state.registrationAddOnStatus}
+              variants={registration_addon_variants}
+              exit={RegistrationAddOnStatus.HIDE}
+              type='text'
+              placeholder={InputNames.NAME}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setState({ ...state, nameValue: e.target.value })
+              }
+              value={state.nameValue}
+            />
+          )}
+        </AnimatePresence>
+        <motion.input
+          name={InputNames.EMAIL}
+          type='text'
+          placeholder={InputNames.EMAIL}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setState({ ...state, emailValue: e.target.value })
           }
-        : {
-            right: 0,
-            transition: {
-              duration: Durations.MODE_CHANGE_MS / 1000,
-              type: 'tween',
-              ease: 'easeInOut',
-            },
-          },
-      [AuthMode.SIGN_UP]: this.props.isMobileView
-        ? {
-            right: 0,
-            transition: {
-              duration: Durations.MODE_CHANGE_MS / 1000,
-              type: 'tween',
-              ease: 'easeInOut',
-            },
-          }
-        : {
-            right: '50%',
-            transition: {
-              duration: Durations.MODE_CHANGE_MS / 1000,
-              type: 'tween',
-              ease: 'easeInOut',
-            },
-          },
-    };
-
-    const registration_addon_variants: { [key: string]: {} } = {
-      [RegistrationAddOnStatus.SHOW]: {
-        height: '50px',
-        paddingLeft: '30px',
-        paddingRight: '30px',
-        opacity: 1,
-        transition: {
-          duratiion: Durations.MODE_CHANGE_MS / 1000,
-        },
-      },
-      [RegistrationAddOnStatus.HIDE]: {
-        lineHeight: '0',
-        padding: '0',
-        border: '0',
-        height: '0',
-        margin: '0',
-        transition: {
-          duratiion: Durations.MODE_CHANGE_MS / 1000,
-        },
-      },
-    };
-
-    const submit_button_variants: { [key: string]: {} } = {
-      [TransitionState.FIXED]: {
-        opacity: 1,
-        transition: {
-          duration: Durations.FAST_MS / 1000,
-        },
-        backgroundColor: 'rgba(255,255,255,1)',
-      },
-      [TransitionState.TRANSITIONING]: {
-        color: ['#1588CC', 'rgba(255,255,255,0)', '#1588CC'],
-        transition: {
-          duration: Durations.MODE_CHANGE_MS / 1000,
-        },
-      },
-      [CommonTransitionVariants.HOVER]: {
-        scale: 1.1,
-        color: 'rgba(255,255,255,1)',
-        backgroundColor: '#1588CC',
-        transition: {
-          duration: Durations.FAST_MS / 1000,
-        },
-      },
-      [CommonTransitionVariants.TAP]: {
-        scale: 0.9,
-        transition: {
-          duration: Durations.FAST_MS / 1000,
-        },
-      },
-    };
-
-    return (
-      <motion.section
-        layoutId='authLayout'
-        animate={
-          this.props.authMode === AuthMode.SIGN_IN
-            ? AuthMode.SIGN_IN
-            : AuthMode.SIGN_UP
-        }
-        variants={auth_section_variants}
-        initial={AuthMode.SIGN_IN}
-        className='signInSpaceDiv'
-      >
-        <motion.div className='signInTitleDiv' layoutId='authLayout'>
-          <motion.p className='signInTitleCTA'>{this.state.authTitle}</motion.p>
-          <img src={logo} alt='Crypt Logo' className='authTitleLogo' />
-        </motion.div>
-        <form className='signInForm'>
+          value={state.emailValue}
+          layoutId='authLayout'
+        />
+        <div className='passwordInputContainer'>
+          <motion.input
+            name={InputNames.PASSWORD}
+            type={
+              props.authMode === AuthMode.SIGN_UP && state.passwordVisibility
+                ? 'text'
+                : 'password'
+            }
+            placeholder={InputNames.PASSWORD}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setState({
+                ...state,
+                passwordValue: e.target.value,
+                passwordStrengthWidth:
+                  AuthSectionHelpers.getSignUpPasswdStrengthIndicator(
+                    e.target.value
+                  ),
+              });
+            }}
+            initial={{
+              backgroundColor: AuthSectionHelpers.fetchPasswordInputColour(
+                props.authMode,
+                state.passwordStrengthWidth
+              ),
+            }}
+            animate={{
+              backgroundColor: AuthSectionHelpers.fetchPasswordInputColour(
+                props.authMode,
+                state.passwordStrengthWidth
+              ),
+            }}
+            onHoverStart={() =>
+              setState({ ...state, passwordVisibility: true })
+            }
+            onHoverEnd={() => setState({ ...state, passwordVisibility: false })}
+            value={state.passwordValue}
+            layoutId='authLayout'
+          />
           <AnimatePresence>
-            {this.state.registrationAddOnStatus ===
-              RegistrationAddOnStatus.SHOW && (
-              <motion.input
+            {state.registrationAddOnStatus === RegistrationAddOnStatus.SHOW && (
+              <motion.div
+                key='passwordStrength'
+                initial={{
+                  width: '0%',
+                  backgroundColor: PasswordStrengthBarColours.WEAK,
+                }}
+                animate={{
+                  width: `${state.passwordStrengthWidth}%`,
+                  height: '10px',
+                  backgroundColor: AuthSectionHelpers.evaluatePasswordBarColour(
+                    state.passwordStrengthWidth
+                  ),
+                  transition: {
+                    duration: Durations.MODE_CHANGE_MS / 2000,
+                  },
+                }}
+                exit={{ height: '0', padding: '0', margin: '0' }}
+                className='passwordStrengthMeter'
                 layoutId='authLayout'
-                key='name_input'
-                name={InputNames.NAME}
-                initial={RegistrationAddOnStatus.HIDE}
-                animate={this.state.registrationAddOnStatus}
-                variants={registration_addon_variants}
-                exit={RegistrationAddOnStatus.HIDE}
-                type='text'
-                placeholder={InputNames.NAME}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  this.setState({ nameValue: e.target.value })
-                }
-                value={this.state.nameValue}
               />
             )}
           </AnimatePresence>
-          <motion.input
-            name={InputNames.EMAIL}
-            type='text'
-            placeholder={InputNames.EMAIL}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              this.setState({ emailValue: e.target.value })
-            }
-            value={this.state.emailValue}
-            layoutId='authLayout'
-          />
-          <div className='passwordInputContainer'>
-            <motion.input
-              name={InputNames.PASSWORD}
-              type={
-                this.props.authMode === AuthMode.SIGN_UP &&
-                this.state.passwordVisibility
-                  ? 'text'
-                  : 'password'
-              }
-              placeholder={InputNames.PASSWORD}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                this.setState({ passwordValue: e.target.value });
-                this.evaluateSignUpPassword(e.target.value);
-              }}
-              initial={{ backgroundColor: this.fetchPasswordInputColour() }}
-              animate={{ backgroundColor: this.fetchPasswordInputColour() }}
-              onHoverStart={() => this.setState({ passwordVisibility: true })}
-              onHoverEnd={() => this.setState({ passwordVisibility: false })}
-              value={this.state.passwordValue}
-              layoutId='authLayout'
-            />
-            <AnimatePresence>
-              {this.state.registrationAddOnStatus ===
-                RegistrationAddOnStatus.SHOW && (
-                <motion.div
-                  key='passwordStrength'
-                  initial={{
-                    width: '0%',
-                    backgroundColor: PasswordStrengthBarColours.WEAK,
-                  }}
-                  animate={{
-                    width: `${this.state.passwordStrengthWidth}%`,
-                    height: '10px',
-                    backgroundColor: this.fetchPasswordBarColour(),
-                    transition: {
-                      duration: Durations.MODE_CHANGE_MS / 2000,
-                    },
-                  }}
-                  exit={{ height: '0', padding: '0', margin: '0' }}
-                  className='passwordStrengthMeter'
-                  layoutId='authLayout'
-                />
-              )}
-            </AnimatePresence>
-          </div>
-          <motion.button
-            initial={TransitionState.FIXED}
-            animate={this.props.transitionState}
-            transition={{
-              duration: Durations.FAST_MS / 1000,
-            }}
-            variants={submit_button_variants}
-            whileHover={CommonTransitionVariants.HOVER}
-            whileTap={CommonTransitionVariants.TAP}
-            onClick={this.authenticate}
-            type='submit'
-            layoutId='authLayout'
-          >
-            {this.state.authButtonText}
-          </motion.button>
-        </form>
-      </motion.section>
-    );
-  }
-}
+        </div>
+        <motion.button
+          initial={TransitionState.FIXED}
+          animate={props.transitionState}
+          transition={{
+            duration: Durations.FAST_MS / 1000,
+          }}
+          variants={submit_button_variants}
+          whileHover={CommonTransitionVariants.HOVER}
+          whileTap={CommonTransitionVariants.TAP}
+          onClick={authenticate}
+          type='submit'
+          layoutId='authLayout'
+        >
+          {state.authButtonText}
+        </motion.button>
+      </form>
+    </motion.section>
+  );
+};
+
+export default AuthenticationSection;

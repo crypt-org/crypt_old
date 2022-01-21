@@ -16,6 +16,12 @@ export const cryptReduxSlice = createSlice({
     ) => {
       state = initialState;
     },
+    initializeCrypt: (
+      state: WritableDraft<Crypt>,
+      action?: PayloadAction<Crypt>
+    ) => {
+      // Do nothing for now
+    },
   },
 });
 

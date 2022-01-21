@@ -22,13 +22,19 @@ export interface SignUpData extends LoginData {
   keyData: KeyData;
 }
 
-export function login(email: string, password: string): void {
+export async function login(
+  email: string,
+  password: string,
+  onLoginComplete: (isLoginSuccess: boolean) => void
+): Promise<void> {
   signInWithFireauth(email, password)
     .then((usercreds: UserCredential) => {
       console.log(usercreds);
+      onLoginComplete(true);
     })
     .catch((error: { message: string }) => {
       console.log(error.message);
+      onLoginComplete(false);
     });
 }
 
