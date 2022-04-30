@@ -1,7 +1,6 @@
-export default interface User {
+export default interface UserModel {
   email: string;
   name: string;
   uid: string;
   pub: string;
-  priv: string;
 }

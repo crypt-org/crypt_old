@@ -1,13 +1,9 @@
-import "./AuthRoute.scss";
-import React from "react";
-import { isMobileView } from "../../styles";
-import {
-  AuthMode,
-  Durations,
-  TransitionState,
-} from "./constants";
-import InfoSection from "./components/info";
-import AuthSection from "./components/auth";
+import './AuthRoute.scss';
+import React from 'react';
+import { isMobileView } from '../../styles';
+import { AuthMode, Durations, TransitionState } from './constants';
+import InfoSection from './components/info';
+import AuthSection from './components/auth';
 
 export type AuthPageProps = {};
 export type AuthPageState = {
@@ -31,18 +27,18 @@ export default class AuthRoute extends React.PureComponent<
       isMobileView: isMobileView(),
       authSectionModeChangeCallback: undefined,
       infoSectionModeChangeCallback: undefined,
-      resizeCallback: () => this.setState({ isMobileView: isMobileView() })
+      resizeCallback: () => this.setState({ isMobileView: isMobileView() }),
     };
     this.changeAuthMode = this.changeAuthMode.bind(this);
   }
 
   componentDidMount() {
     // On viewport resize, isMobileView is computed
-    window.addEventListener("resize", this.state.resizeCallback);
+    window.addEventListener('resize', this.state.resizeCallback);
   }
 
   componentWillUnmount() {
-    window.removeEventListener("resize", this.state.resizeCallback);
+    window.removeEventListener('resize', this.state.resizeCallback);
   }
 
   changeAuthMode(): void {
@@ -77,7 +73,7 @@ export default class AuthRoute extends React.PureComponent<
 
   render(): JSX.Element {
     return (
-      <div className="authPageDiv">
+      <div className='authPageDiv'>
         <InfoSection
           isMobileView={this.state.isMobileView}
           authMode={this.state.authMode}

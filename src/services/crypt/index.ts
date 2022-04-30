@@ -1,17 +1,18 @@
-import Crypt, { CRYPT_SPLIT_SIZE_BYTES } from './constants';
+import { CRYPT_SPLIT_SIZE_BYTES } from './constants';
+import CryptModel from '../../models/crypt';
 
 export default class CryptService {
-  static GetNewCrypt(): Crypt {
+  static GetNewCrypt(): CryptModel {
     return {
       accounts: [],
-    } as Crypt;
+    } as CryptModel;
   }
 
-  static RebuildCrypt(cryptString: string): Crypt {
+  static RebuildCrypt(cryptString: string): CryptModel {
     return JSON.parse(cryptString);
   }
 
-  static ConvertCryptToString(crypt: Crypt): string {
+  static ConvertCryptToString(crypt: CryptModel): string {
     return JSON.stringify(crypt);
   }
 
