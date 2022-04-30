@@ -15,6 +15,9 @@ import {
 } from '../../../../../services/firestore';
 import { Firestore_UserModel } from '../../../../../services/firestore/constants';
 import Factory_User from '../../../../../services/user';
+import zxcvbn from 'zxcvbn';
+import { PasswordStrengthBarColours, PasswordInputColours } from '../constants';
+import { AuthMode } from '../../../constants';
 
 export interface LoginData {
   name: string;
@@ -123,3 +126,41 @@ export async function signup(
   EncryptionService.GenerateRSAKeysWithPassword(password, callback);
   return;
 }
+
+export const AuthSectionHelpers: {
+  getSignUpPasswdStrengthIndicator: (newPass: string) => number;
+  evaluatePasswordBarColour: (passwdStrengthPercent: number) => string;
+  fetchPasswordInputColour: (
+    authMode: AuthMode,
+    passwdStrengthPercent: number
+  ) => string;
+} = {
+  getSignUpPasswdStrengthIndicator: (newPass: string) => {
+    const strengthPercent: number =
+      newPass === '' ? 0 : (zxcvbn(newPass).score / 4) * 90 + 10; // Scale output between 10 & 100 if newPass is not empty
+    return strengthPercent;
+  },
+  evaluatePasswordBarColour: (passwdStrengthPercent: number) => {
+    if (passwdStrengthPercent < 50) {
+      return PasswordStrengthBarColours.WEAK;
+    } else if (passwdStrengthPercent < 99) {
+      return PasswordStrengthBarColours.MEDIUM;
+    } else {
+      return PasswordStrengthBarColours.STRONG;
+    }
+  },
+  fetchPasswordInputColour: (
+    authMode: AuthMode,
+    passwdStrengthPercent: number
+  ) => {
+    if (authMode === AuthMode.SIGN_IN || passwdStrengthPercent === 0) {
+      return PasswordInputColours.DEFAULT;
+    } else if (passwdStrengthPercent < 50) {
+      return PasswordInputColours.WEAK;
+    } else if (passwdStrengthPercent < 99) {
+      return PasswordInputColours.MEDIUM;
+    } else {
+      return PasswordInputColours.STRONG;
+    }
+  },
+};
